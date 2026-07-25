@@ -1,0 +1,46 @@
+name: Bug report
+description: Report a reproducible connector, addon, or Blender integration problem.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Do not report security vulnerabilities here. Use the Security tab.
+  - type: input
+    id: version
+    attributes:
+      label: ViperMesh version
+      placeholder: v1.2.0
+    validations:
+      required: true
+  - type: input
+    id: blender
+    attributes:
+      label: Blender version
+      placeholder: 5.2.0
+    validations:
+      required: true
+  - type: input
+    id: client
+    attributes:
+      label: MCP client and operating system
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: Include the tool name, sanitized parameters, and smallest reproducible scene.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized logs
+      render: shell

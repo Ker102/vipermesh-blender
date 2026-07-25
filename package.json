@@ -1,0 +1,56 @@
+{
+  "name": "vipermesh-blender-mcp",
+  "version": "1.2.0",
+  "description": "Persistent Model Context Protocol server and deterministic Blender addon for AI agents",
+  "license": "MIT",
+  "private": false,
+  "type": "module",
+  "author": "ViperMesh contributors",
+  "homepage": "https://github.com/Ker102/vipermesh-blender#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ker102/vipermesh-blender.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Ker102/vipermesh-blender/issues"
+  },
+  "keywords": [
+    "blender",
+    "mcp",
+    "model-context-protocol",
+    "3d",
+    "ai-agent",
+    "blender-addon",
+    "automation"
+  ],
+  "bin": {
+    "vipermesh-blender": "./dist/public-portable-blender-mcp.js"
+  },
+  "files": ["addon", "data", "dist", "docs", "README.md", "LICENSE"],
+  "scripts": {
+    "mcp": "tsx scripts/public-portable-blender-mcp.ts",
+    "build": "tsup scripts/public-portable-blender-mcp.ts --format esm --platform node --out-dir dist --clean",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx tests/conformance.ts",
+    "audit": "npm audit --audit-level=moderate",
+    "check": "npm run typecheck && npm test && npm run build && node scripts/validate-package.mjs && npm run audit",
+    "prepublishOnly": "npm run check"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.5.0",
+    "tsx": "^4.23.1",
+    "typescript": "^5.6.0"
+  },
+  "overrides": {
+    "@hono/node-server": "^2.0.11",
+    "esbuild": "^0.28.1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

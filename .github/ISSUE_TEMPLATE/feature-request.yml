@@ -1,0 +1,23 @@
+name: Feature request
+description: Propose a broadly reusable Blender or MCP capability.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: workflow
+    attributes:
+      label: 3D workflow problem
+      description: Describe the repeated workflow, not only one object-specific operation.
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Expected outcome
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Current workaround
+      description: Explain whether execute_code, manual Blender work, or another addon is currently required.
