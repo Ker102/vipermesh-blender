@@ -26,7 +26,7 @@
   "bin": {
     "vipermesh-blender": "./dist/public-portable-blender-mcp.js"
   },
-  "files": ["addon", "data", "dist", "docs", "README.md", "LICENSE"],
+  "files": ["addon", "dist", "docs", "skills", "README.md", "LICENSE"],
   "scripts": {
     "mcp": "tsx scripts/public-portable-blender-mcp.ts",
     "build": "tsup scripts/public-portable-blender-mcp.ts --format esm --platform node --out-dir dist --clean",

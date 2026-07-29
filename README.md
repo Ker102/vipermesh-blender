@@ -25,7 +25,7 @@ broad deterministic tool surface for common operations.
 | Deterministic tools | Structured operations for assembly, materials, cameras, lighting, rendering, rigging, UVs, retopology, export, and inspection |
 | Scene validation | Grounding, support, clearance, spatial-relation, file-health, and render-artifact checks |
 | Compact workflows | Bounded batch calls plus separate build, inspect/repair, and finalize stages |
-| Agent onboarding | Session bootstrap, MCP resources, concise operating rules, and local task guides |
+| Agent onboarding | Session bootstrap, MCP resources, concise operating rules, and portable tool skills |
 | Custom fallback | `execute_code` remains available when a deterministic operation is not the right tool |
 
 ## Architecture
@@ -84,22 +84,25 @@ npm run build
 
 ### 3. Configure your MCP client
 
-Use the absolute repository path:
+Use the built entry point from an absolute path:
 
 ```json
 {
   "mcpServers": {
     "vipermesh-blender": {
-      "command": "npm",
-      "args": ["run", "mcp"],
-      "cwd": "C:/absolute/path/to/vipermesh-blender"
+      "command": "node",
+      "args": [
+        "C:/absolute/path/to/vipermesh-blender/dist/public-portable-blender-mcp.js"
+      ]
     }
   }
 }
 ```
 
 Start this command once through the MCP client. Do not invoke `npm`, `npx`, or
-`tsx` again for each Blender operation.
+`tsx` again for each Blender operation. See [MCP client setup](docs/client-setup.md)
+for Codex, JSON-configured clients, compatibility, and the optional Docker MCP
+Toolkit route.
 
 ## First Agent Calls
 
@@ -122,7 +125,9 @@ The public MCP surface includes:
 - `get_3d_guidance_document`
 
 Read the [complete connector manual](docs/portable-blender-mcp.md) for request
-shapes, batching rules, staged workflows, local guidance, and troubleshooting.
+shapes, batching rules, staged workflows, local tool skills, and
+troubleshooting. The repository also ships an installable
+[`using-vipermesh-blender` agent skill](skills/using-vipermesh-blender/SKILL.md).
 
 ## Security
 
@@ -136,7 +141,7 @@ reporting process.
 ## Public Connector Scope
 
 This repository contains the open-source Blender addon, portable MCP server,
-local operating guidance, and connector tests. It does not include the
+portable public tool skills, and connector tests. It does not include the
 ViperMesh application, authentication, billing, private prompts, private RAG
 data, cloud model routing, private assets, or benchmark evidence.
 
@@ -156,6 +161,13 @@ unusual node graphs, and uncovered workflows.
 
 The process retains a serialized connection to Blender. Relaunching it for
 every call adds avoidable startup, transport, and agent-tool overhead.
+
+### Does it require Docker?
+
+No. Local stdio-capable MCP clients launch the Node server directly. Docker MCP
+Toolkit is an optional packaging and gateway route, and is not yet a supported
+ViperMesh installation path because host-to-Blender loopback connectivity still
+requires cross-platform validation.
 
 ### Does the public connector require ViperMesh cloud authentication?
 

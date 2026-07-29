@@ -3,12 +3,37 @@ import path from "node:path"
 import { fileURLToPath } from "node:url"
 
 const MODULE_DIR = path.dirname(fileURLToPath(import.meta.url))
-const TOOL_GUIDES_DIR = [
-  path.resolve(MODULE_DIR, "..", "..", "data", "tool-guides"),
-  path.resolve(MODULE_DIR, "..", "data", "tool-guides"),
-  path.resolve(process.cwd(), "data", "tool-guides"),
+const TOOL_SKILLS_DIR = [
+  path.resolve(
+    MODULE_DIR,
+    "..",
+    "..",
+    "skills",
+    "using-vipermesh-blender",
+    "references"
+  ),
+  path.resolve(
+    MODULE_DIR,
+    "..",
+    "skills",
+    "using-vipermesh-blender",
+    "references"
+  ),
+  path.resolve(
+    process.cwd(),
+    "skills",
+    "using-vipermesh-blender",
+    "references"
+  ),
 ].find((candidate) => fs.existsSync(candidate)) ??
-  path.resolve(MODULE_DIR, "..", "..", "data", "tool-guides")
+  path.resolve(
+    MODULE_DIR,
+    "..",
+    "..",
+    "skills",
+    "using-vipermesh-blender",
+    "references"
+  )
 const MAX_GUIDANCE_DOCUMENT_BYTES = 64 * 1024
 const DEFAULT_GUIDANCE_LIMIT = 5
 const MAX_GUIDANCE_LIMIT = 20
@@ -74,10 +99,10 @@ function validateGuideFilename(filename: string) {
 
 function guidePath(filename: string) {
   validateGuideFilename(filename)
-  const resolved = path.resolve(TOOL_GUIDES_DIR, filename)
-  const relative = path.relative(TOOL_GUIDES_DIR, resolved)
+  const resolved = path.resolve(TOOL_SKILLS_DIR, filename)
+  const relative = path.relative(TOOL_SKILLS_DIR, resolved)
   if (relative.startsWith("..") || path.isAbsolute(relative)) {
-    throw new Error("Guidance filename resolves outside the tool-guide directory")
+    throw new Error("Guidance filename resolves outside the tool-skill directory")
   }
   return resolved
 }
@@ -131,7 +156,7 @@ function searchLocalGuides(query: string, limit: number): GuidanceSearchItem[] {
   if (terms.length === 0) return []
 
   return fs
-    .readdirSync(TOOL_GUIDES_DIR)
+    .readdirSync(TOOL_SKILLS_DIR)
     .filter((filename) => filename.endsWith(".md"))
     .map((filename) => {
       const content = fs.readFileSync(guidePath(filename), "utf8")
@@ -149,7 +174,7 @@ function searchLocalGuides(query: string, limit: number): GuidanceSearchItem[] {
       id: `local:${filename}`,
       title: titleFromContent(filename, content),
       content: excerpt(content),
-      source: "tool-guides",
+      source: "tool-skills",
       metadata: { filename, retrieval: "local" },
     }))
 }

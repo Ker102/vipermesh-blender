@@ -22,13 +22,14 @@ assert.match(VIPERMESH_MCP_INSTRUCTIONS, /one persistent MCP server process/i)
 assert.match(VIPERMESH_CONNECTOR_MANUAL, /execute_code/)
 assert.match(getBlenderAgentContext().context, /Inspect/i)
 
-const guide = getGuidanceDocument("spatial-positioning-guide.md")
+const guide = getGuidanceDocument("spatial-validation.md")
 assert.match(guide.title, /spatial/i)
 const guidance = await search3dGuidance(
   { query: "grounding support placement", source: "local" },
   { semanticSearch: async () => [] }
 )
 assert.ok(guidance.results.length > 0)
+assert.ok(guidance.results.every((result) => result.source === "tool-skills"))
 
 let clientCreations = 0
 const service = createPortableMcpService({

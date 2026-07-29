@@ -4,6 +4,15 @@ All notable changes to ViperMesh for Blender are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- Replaced the exported private tool-guide corpus with a concise, installable
+  public agent skill and adaptable reference documents.
+- Added explicit native stdio client setup and clarified the optional,
+  not-yet-supported Docker MCP Toolkit route.
+- Added export checks that prevent private `data/tool-guides` content from
+  entering public releases.
+
 ## [1.2.0] - 2026-07-25
 
 ### Added

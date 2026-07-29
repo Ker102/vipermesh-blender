@@ -28,7 +28,7 @@ instead of reconnecting after every tool call.
   started.
 - The addon reachable at `127.0.0.1:9876`, unless overridden with
   `BLENDER_MCP_HOST` and `BLENDER_MCP_PORT`.
-Local checked-in tool-guide search works without database or embedding
+Local checked-in tool-skill search works without database or embedding
 credentials.
 
 ## Start The Gateway
@@ -44,15 +44,16 @@ diagnostics are written to stderr.
 
 ## Coding Agent Configuration
 
-Use an absolute repository path:
+Use the built entry point from an absolute repository path:
 
 ```json
 {
   "mcpServers": {
     "vipermesh-blender": {
-      "command": "npm",
-      "args": ["run", "mcp"],
-      "cwd": "C:/absolute/path/to/vipermesh-blender"
+      "command": "node",
+      "args": [
+        "C:/absolute/path/to/vipermesh-blender/dist/public-portable-blender-mcp.js"
+      ]
     }
   }
 }
@@ -60,7 +61,8 @@ Use an absolute repository path:
 
 The exact configuration location depends on the coding agent. Restart or open a
 new agent session after registering the server if the client does not reload MCP
-servers dynamically.
+servers dynamically. See [MCP client setup](client-setup.md) for Codex and
+client compatibility details.
 
 ## Available MCP Tools
 
@@ -140,16 +142,22 @@ between decimation, voxel remesh, QuadriFlow, or custom fallback code.
 
 `search_3d_guidance` supports:
 
-- `source: "local"` for deterministic search over `data/tool-guides`;
+- `source: "local"` for deterministic search over the public agent skill
+  references in `skills/using-vipermesh-blender/references`;
 - `source: "semantic"` for a configured private ViperMesh semantic adapter;
 - `source: "all"` to combine both.
 
 Semantic retrieval is an optional private-product adapter. The public connector
-ships deterministic local guide retrieval and does not require database or
+ships deterministic local tool-skill retrieval and does not require database or
 embedding credentials.
 
 `get_3d_guidance_document` reads a Markdown basename from
-`data/tool-guides`. Arbitrary filesystem paths and traversal are rejected.
+`skills/using-vipermesh-blender/references`. Arbitrary filesystem paths and
+traversal are rejected.
+
+The skill references describe capabilities, tradeoffs, and validation patterns.
+They are recommendations, not universal scene recipes. The private ViperMesh
+RAG corpus is not distributed in the public connector.
 
 ## Security Boundary
 
