@@ -241,7 +241,7 @@ export function createPortableBlenderMcpServer(service: PortableMcpService) {
     {
       title: "Search 3D Guidance",
       description:
-        "Search checked-in ViperMesh 3D tool guides and optionally the configured semantic guidance store.",
+        "Search checked-in ViperMesh 3D tool skills and optionally the configured semantic guidance store.",
       inputSchema: z.object({
         query: z.string().trim().min(1).max(2_000),
         limit: z.number().int().min(1).max(20).optional(),
@@ -263,7 +263,7 @@ export function createPortableBlenderMcpServer(service: PortableMcpService) {
     {
       title: "Get 3D Guidance Document",
       description:
-        "Read one approved Markdown document from the checked-in ViperMesh tool-guide directory.",
+        "Read one approved Markdown reference from the checked-in ViperMesh agent skill.",
       inputSchema: z.object({
         filename: z.string().trim().min(1).max(255),
       }),
