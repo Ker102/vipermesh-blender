@@ -9,11 +9,9 @@ assert.ok(fs.existsSync(cliPath), `Missing built CLI: ${cliPath}`)
 const cli = fs.readFileSync(cliPath, "utf8")
 assert.ok(cli.startsWith("#!/usr/bin/env node"), "Built CLI must retain its Node shebang")
 assert.ok(fs.existsSync("skills/using-vipermesh-blender/SKILL.md"))
-assert.ok(
-  fs.existsSync(
-    "skills/using-vipermesh-blender/references/spatial-validation.md"
-  )
-)
+for (const reference of ["scene-operations", "spatial-validation", "visual-presentation", "geometry-materials-assets", "character-animation-export"]) {
+  assert.ok(fs.existsSync(`skills/using-vipermesh-blender/references/${reference}.md`), `Missing shipped reference: ${reference}`)
+}
 assert.ok(!fs.existsSync("data/tool-guides"))
 assert.ok(fs.existsSync("addon/vipermesh-addon.py"))
 assert.ok(fs.existsSync("NOTICE.md"))

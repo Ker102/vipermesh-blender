@@ -4,6 +4,21 @@ The public repository is generated from
 `config/public-blender-connector-files.json`. Never fork or copy the private
 repository history.
 
+## Current Release
+
+- Repository: https://github.com/Ker102/vipermesh-blender
+- Release target: https://github.com/Ker102/vipermesh-blender/releases/tag/v1.3.0
+- Source release target: `v1.3.0`
+- Blender compatibility target: 5.2
+- CI: standalone typecheck, conformance tests, build, package validation, npm
+  audit, and addon Python compilation
+- Historical live validation (v1.2.0): persistent stdio MCP discovery, scene calls, mutation,
+  staged preview/finalize, save, local guidance, and `execute_code` fallback
+- Current launch checks: isolated package conformance, inline image transport,
+  render-only/preserved-presentation stages, spatial failure withholding,
+  dependency audit, Python compilation, and desktop/mobile site review. Full
+  live agent performance is evaluated in the next demo pilot.
+
 ## Before Export
 
 - Run `npm run validate:public-blender-connector`.
@@ -26,7 +41,7 @@ repository history.
 
 ## Release
 
-1. Install dependencies and run `npm run typecheck` in the generated directory.
+1. Install dependencies and run `npm run check` in the generated directory.
 2. Package the addon as a release artifact.
 3. Tag the connector version.
 4. Publish the MCP package only after its package contents are inspected.

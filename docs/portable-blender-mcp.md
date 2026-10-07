@@ -1,5 +1,21 @@
 # Portable Blender MCP Gateway
 
+## Result Review And Existing Scenes
+
+Image-producing calls attach a PNG/JPEG directly when it is available on the MCP
+server's filesystem and at most 3 MiB. Otherwise use the reported artifact path
+with an image viewer. The `imageAttached` flag indicates transport availability;
+`visualReviewRequired` means the agent must judge the actual output against the
+task. Image-file health and successful commands are not visual quality scores.
+
+Stage helpers are optional convenience operations. Set `preservePresentation:
+true` on finalize to keep the current camera, lighting and framing. `blendPath`
+is optional; omit it for a render without saving a blend file. Saving through
+finalize refuses an existing destination. Use a standalone save only when an
+overwrite is intended and authorized. Explicit `spatialRelations` are rechecked
+on finalize, and failed relations withhold final output. Diagnostic checks cannot
+certify arbitrary mesh contact; inspect suspicious areas from revealing views.
+
 The portable gateway lets trusted coding agents call ViperMesh Blender tools
 through standard MCP stdio transport, including `execute_code` for measuring
 fallback behavior during local testing.

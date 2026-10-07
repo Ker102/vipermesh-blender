@@ -16,7 +16,9 @@ calls separate when the next action depends on dimensions, contact, topology,
 viewport feedback, or a render.
 
 `run_blender_scene_stage` can compact common build, preview, and finalize work.
-Its stages remain optional. Standalone tools are appropriate for targeted
+Its stages remain optional and may configure the camera and lighting. Set
+`preservePresentation: true` on finalize to keep the active presentation.
+Standalone tools are appropriate for targeted
 repairs and workflows that do not fit the staged shape.
 
 ## Preserve User Work
@@ -32,5 +34,8 @@ hierarchy.
 ## Finish With Evidence
 
 Before reporting completion, confirm that the requested objects and changes
-exist, inspect any high-risk structural relationships, save the intended blend
-file, and produce the visual or export artifact requested by the user.
+exist and inspect high-risk structural relationships. Save a blend file only
+when the user requests it, using their approved destination. Omit `blendPath`
+for rendering-only work; inspection and export workflows can use standalone
+tools without saving or overwriting a blend file. Produce and inspect the
+requested visual or export artifact before claiming it is ready.

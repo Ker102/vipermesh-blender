@@ -8,6 +8,9 @@
 **A persistent Model Context Protocol server and deterministic Blender addon
 for AI agents.**
 
+[Project overview and setup](https://ker102.github.io/vipermesh-blender/)
+| [ViperMesh Studio waitlist](https://vipermesh-studio.vercel.app/waitlist)
+
 ViperMesh for Blender gives MCP-compatible agents structured scene inspection,
 reusable Blender operations, bounded batches, local 3D workflow guidance, and
 an explicit Python fallback. It is designed to reduce repeated Blender API
@@ -59,7 +62,7 @@ loopback by default and reports **Stopped**, **Ready**, **Agent connected**, or
 
 ### 1. Install the Blender addon
 
-Download `vipermesh-addon.py` from the
+Download the versioned addon `.py` or addon `.zip` from the
 [latest release](https://github.com/Ker102/vipermesh-blender/releases/latest).
 In Blender:
 

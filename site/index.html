@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ViperMesh for Blender | Open-source Blender MCP</title>
+  <meta name="description" content="Connect AI agents to Blender with a persistent MCP server, structured scene tools, inspection and Python fallback. Free, open-source and local.">
+  <link rel="canonical" href="https://ker102.github.io/vipermesh-blender/">
+  <meta property="og:title" content="ViperMesh for Blender"><meta property="og:description" content="Structured Blender tools for your AI agent. Open source, local, and built for persistent MCP sessions.">
+  <meta property="og:type" content="website"><meta property="og:url" content="https://ker102.github.io/vipermesh-blender/">
+  <meta property="og:image" content="https://ker102.github.io/vipermesh-blender/asset-preview.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="stylesheet" href="styles.css?v=1.3.0">
+  <link rel="icon" href="asset-preview.png">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareSourceCode","name":"ViperMesh for Blender","description":"An open-source persistent MCP server and Blender addon for structured scene operations.","codeRepository":"https://github.com/Ker102/vipermesh-blender","license":"https://github.com/Ker102/vipermesh-blender/blob/main/LICENSE","programmingLanguage":["TypeScript","Python"],"runtimePlatform":"Blender and Node.js","url":"https://ker102.github.io/vipermesh-blender/"}</script>
+  <script src="site.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header><a class="brand" href="./">ViperMesh <span>/ Blender</span></a><nav aria-label="Main navigation"><a href="#setup">Setup</a><a href="https://github.com/Ker102/vipermesh-blender">GitHub ↗</a></nav></header>
+  <main id="main">
+    <section class="hero">
+      <img src="asset-preview.png" alt="A stylized spacecraft asset" width="640" height="640" fetchpriority="high">
+      <div class="shade"></div>
+      <div class="hero-content"><p class="eyebrow">Open source / MIT licensed / Local</p><h1>ViperMesh<br>for Blender</h1><p class="lead">Give your agent<br>the tools to work in 3D.</p><p>Connect an MCP-compatible agent to Blender. Inspect your scene, make structured edits and check the result through one persistent session.</p><div class="actions"><a class="primary" href="#setup">Get started ↓</a><a href="https://github.com/Ker102/vipermesh-blender/releases/latest">Download addon ↗</a></div></div>
+    </section>
+    <section class="overview wrap"><p class="eyebrow">An agent connection for your existing workspace</p><div class="columns"><div><h2>Structured operations</h2><p>Assembly, transforms, materials, cameras, lighting, rendering, UVs, retopology, rigging and export. Discover relevant tools as the task develops.</p></div><div><h2>Inspect, then improve</h2><p>Check support, orientation and clearances. Review visual results and repair specific problems. Diagnostic checks support judgment; they cannot certify every scene.</p></div><div><h2>Room for custom work</h2><p>Keep Python execution for unusual geometry and uncovered operations. Batch known actions and keep decision points where new observations matter.</p></div></div></section>
+    <section class="connection"><div class="wrap"><p class="eyebrow">One session. One local connection.</p><div class="flow"><span>Your MCP client</span><b aria-hidden="true">→</b><span>ViperMesh server</span><b aria-hidden="true">→</b><span>Blender addon</span></div><p>The client launches the Node server once. The server keeps a serialized connection to the addon. No ViperMesh cloud account or Docker is needed for the local connector.</p></div></section>
+    <section id="setup" class="setup wrap"><div><p class="eyebrow">From download to first edit</p><h2>Connect your agent.</h2><p>Use the Blender version currently tested in the repository and a Node runtime that meets the package requirements. Keep Blender open with the local bridge running.</p><a href="https://github.com/Ker102/vipermesh-blender/blob/main/docs/client-setup.md">Client-specific setup and troubleshooting ↗</a></div><ol><li><h3>Install the addon</h3><p>Download the versioned addon <code>.py</code> or <code>.zip</code> from the latest release. In Blender, install it from disk, enable it, and start the local bridge in the ViperMesh sidebar.</p></li><li><h3>Build the MCP server</h3><pre><code id="install-command">git clone https://github.com/Ker102/vipermesh-blender.git
+cd vipermesh-blender
+npm install
+npm run build</code></pre><button type="button" data-copy="install-command">Copy commands</button><span class="copy-status" aria-live="polite"></span></li><li><h3>Add it to your MCP client</h3><p>Configure the client to launch <code>node</code> with the absolute path to <code>dist/public-portable-blender-mcp.js</code>. Start one server per session, not one per tool call.</p><pre><code>{
+  "mcpServers": {
+    "vipermesh-blender": {
+      "command": "node",
+      "args": ["/absolute/path/to/vipermesh-blender/dist/public-portable-blender-mcp.js"]
+    }
+  }
+}</code></pre><p>JSON configuration above is a common pattern; your client's syntax may differ.</p></li><li><h3>Inspect before editing</h3><p>Ask your agent to call <code>bootstrap_vipermesh_session</code>, inspect the existing scene, then discover tools for your task. The repository includes a portable agent skill with adaptable operating guidance.</p></li></ol></section>
+    <section class="scope wrap"><p class="eyebrow">What to expect</p><details><summary>Is it a 3D generation model?</summary><p>The connector lets an agent operate Blender. It does not bundle a hosted text-to-3D model or promise production-ready assets. You can use local assets and your own Blender workflows.</p></details><details><summary>Is it faster than UI automation?</summary><p>Structured tools are designed to avoid repetitive navigation and generated Blender code. Performance depends on the model and task; we are preparing reproducible comparisons and make no universal speed or cost claim here.</p></details><details><summary>Does it judge the final scene automatically?</summary><p>Tools provide diagnostics and image-file checks. The agent still needs to inspect visual output and judge it against your request. A passing report can miss mesh-level collisions or an artistic mismatch.</p></details><details><summary>What can an agent access?</summary><p>This is a trusted local connector. Python fallback can execute arbitrary code inside Blender. Keep the bridge on loopback, connect trusted clients and review destructive actions. Read the repository security guidance before use.</p></details><details><summary>How does this relate to ViperMesh Studio?</summary><p>The public connector is usable independently. ViperMesh Studio is a broader AI workspace in development for artists and game creators, connecting generation, inspection and specialist workflows.</p><a href="https://vipermesh-studio.vercel.app/waitlist">Join the Studio waitlist ↗</a></details></section>
+    <section class="closing"><div class="wrap"><h2>Start with your scene.</h2><p>Try one useful edit. Inspect the result. Tell us where the connection helps and where it falls short.</p><a href="https://github.com/Ker102/vipermesh-blender/issues">Share feedback ↗</a></div></section>
+  </main>
+  <footer class="wrap"><p>ViperMesh for Blender <span>/ Open source</span></p><div><a href="https://github.com/Ker102/vipermesh-blender">Repository</a><a href="https://github.com/Ker102/vipermesh-blender/blob/main/NOTICE.md">Attribution</a><a href="https://github.com/Ker102/vipermesh-blender/blob/main/SECURITY.md">Security</a><a href="https://vipermesh-studio.vercel.app/waitlist">Studio waitlist</a></div></footer>
+</body></html>
