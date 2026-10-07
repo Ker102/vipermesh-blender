@@ -37,6 +37,9 @@ export interface PortableMcpServiceDependencies {
     source?: string
     similarity?: number
   }>>
+  authorizeCapabilityInvocation?: (
+    params: Record<string, unknown>
+  ) => Promise<Record<string, unknown>>
 }
 
 export interface ListBlenderToolsInput {
@@ -62,6 +65,7 @@ export interface BlenderSceneWorkflowInput {
   previewPath?: string
   renderPath?: string
   blendPath?: string
+  preservePresentation?: boolean
   preset?: "studio" | "product" | "indoor" | "exterior" | "night"
   cameraName?: string
   resolutionX?: number
@@ -112,6 +116,13 @@ export function createPortableMcpService(
 
   async function executeCommand(name: string, params: Record<string, unknown>) {
     validateCommand(name, params)
+    if (
+      name === "invoke_addon_capability" &&
+      params.dry_run === false &&
+      dependencies.authorizeCapabilityInvocation
+    ) {
+      params = await dependencies.authorizeCapabilityInvocation(params)
+    }
     try {
       return await client().execute({ type: name, params })
     } catch (error) {
@@ -252,9 +263,9 @@ export function createPortableMcpService(
         } else {
           if (!input.targetNames?.length) throw new Error("The finalize stage requires targetNames")
           if (!input.renderPath) throw new Error("The finalize stage requires renderPath")
-          if (!input.blendPath) throw new Error("The finalize stage requires blendPath")
           const cameraName = input.cameraName ?? "ViperMesh_Workflow_Camera"
           commands = [
+            ...(!input.preservePresentation ? [
             {
               name: "setup_studio_scene",
               params: {
@@ -277,10 +288,15 @@ export function createPortableMcpService(
                 set_dof_focus: false,
               },
             },
+            ] : []),
             {
               name: "validate_studio_scene",
-              params: { target_names: input.targetNames, camera_name: cameraName },
+              params: { target_names: input.targetNames, require_lights: !input.preservePresentation, ...(input.cameraName || !input.preservePresentation ? { camera_name: cameraName } : {}) },
             },
+            ...(input.spatialRelations?.length ? [{
+              name: "inspect_spatial_relations",
+              params: { relations: input.spatialRelations },
+            }] : []),
           ]
         }
 
@@ -292,7 +308,7 @@ export function createPortableMcpService(
             commands: [
               { name: "render_image", params: { output_path: input.renderPath!, file_format: "PNG" } },
               { name: "inspect_render_artifact", params: { image_path: input.renderPath! } },
-              { name: "save_blend_file", params: { filepath: input.blendPath!, make_dirs: true, check_existing: false } },
+              ...(input.blendPath ? [{ name: "save_blend_file", params: { filepath: input.blendPath, make_dirs: true, check_existing: true } }] : []),
             ],
             stopOnError: true,
           })
@@ -300,7 +316,7 @@ export function createPortableMcpService(
         }
 
         const ready = workflowReady(results)
-        const expectedCount = input.stage === "finalize" ? 6 : commands.length
+        const expectedCount = input.stage === "finalize" ? commands.length + 2 + (input.blendPath ? 1 : 0) : commands.length
         return {
           stage: input.stage,
           requested: expectedCount,
@@ -364,10 +380,16 @@ function compactResponse(name: string, response: McpResponse) {
     "checked_count", "pass_count", "fail_count", "floating_count",
     "high_priority_floating_count", "low_priority_floating_count",
     "below_ground_count", "part_count", "object_count", "deleted_count",
-    "softened_count", "missing_targets", "warnings", "errors",
+    "softened_count", "missing_targets", "warnings", "errors", "camera",
   ]
   for (const key of keys) {
     if (key in result) summary[key] = result[key]
+  }
+  if (Array.isArray(result.relations)) {
+    summary.failed_relations = result.relations.filter((relation) => relation && typeof relation === "object" && relation.passed === false).slice(0, 16)
+  }
+  for (const key of ["high_priority_floating_objects", "below_ground_objects"]) {
+    if (Array.isArray(result[key])) summary[key] = result[key].slice(0, 16)
   }
   return summary
 }
@@ -380,6 +402,8 @@ function workflowReady(results: Array<{ name: string; response: McpResponse }>) 
     if ("ready" in result && result.ready === false) return false
     if ("high_priority_floating_count" in result && Number(result.high_priority_floating_count) > 0) return false
     if ("below_ground_count" in result && Number(result.below_ground_count) > 0) return false
+    if ("fail_count" in result && Number(result.fail_count) > 0) return false
+    if ("camera" in result && result.camera && typeof result.camera === "object" && "active" in result.camera && result.camera.active === false) return false
     return true
   })
 }

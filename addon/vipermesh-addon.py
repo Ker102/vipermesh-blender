@@ -16,19 +16,28 @@ import math
 import shutil
 import zipfile
 import itertools
+import hashlib
+import inspect
+import marshal
+import uuid
 from array import array
 from mathutils import Vector
+from mathutils.bvhtree import BVHTree
+from mathutils.kdtree import KDTree
 from bpy.props import StringProperty, IntProperty, BoolProperty, EnumProperty
 import io
 from contextlib import redirect_stdout, suppress
 
-ADDON_VERSION = (1, 2, 0)
+ADDON_VERSION = (1, 3, 0)
 ADDON_VERSION_LABEL = ".".join(str(part) for part in ADDON_VERSION)
+MAX_POSE_DEFORMATION_WORK = 2_000_000
+MAX_MESH_SURFACE_COMPARISON_FACES = 500_000
+MAX_MESH_SURFACE_COMPARISON_VERTICES = 1_000_000
 
 bl_info = {
     "name": "ViperMesh for Blender",
     "author": "ViperMesh Team",
-    "version": (1, 2, 0),
+    "version": (1, 3, 0),
     "blender": (3, 0, 0),
     "location": "View3D > Sidebar > ViperMesh",
     "description": "Persistent local Blender bridge for ViperMesh and MCP-compatible agents",
@@ -257,6 +266,7 @@ class BlenderMCPServer:
             "set_active_collection": self.set_active_collection,
             "execute_code": self.execute_code,
             "save_blend_file": self.save_blend_file,
+            "restore_blend_checkpoint": self.restore_blend_checkpoint,
             "list_materials": self.list_materials,
             "delete_object": self.delete_object,
             "delete_objects": self.delete_objects,
@@ -264,6 +274,7 @@ class BlenderMCPServer:
             "align_object_to_surface": self.align_object_to_surface,
             "validate_object_clearance": self.validate_object_clearance,
             "inspect_spatial_relations": self.inspect_spatial_relations,
+            "inspect_mesh_intersections": self.inspect_mesh_intersections,
             "inspect_scene_grounding": self.inspect_scene_grounding,
             "align_object_attachment_points": self.align_object_attachment_points,
             "rename_object": self.rename_object,
@@ -286,6 +297,7 @@ class BlenderMCPServer:
             "validate_mesh_geometry": self.validate_mesh_geometry,
             "repair_mesh_geometry": self.repair_mesh_geometry,
             "inspect_retopology_readiness": self.inspect_retopology_readiness,
+            "compare_mesh_surfaces": self.compare_mesh_surfaces,
             "decimate_mesh": self.decimate_mesh,
             "voxel_remesh_mesh": self.voxel_remesh_mesh,
             "quadriflow_remesh_mesh": self.quadriflow_remesh_mesh,
@@ -294,6 +306,7 @@ class BlenderMCPServer:
             "inspect_edit_bone_alignment": self.inspect_edit_bone_alignment,
             "set_edit_bone_alignment": self.set_edit_bone_alignment,
             "inspect_weight_paint_readiness": self.inspect_weight_paint_readiness,
+            "inspect_pose_deformation": self.inspect_pose_deformation,
             "normalize_vertex_group_weights": self.normalize_vertex_group_weights,
             "create_rigify_metarig": self.create_rigify_metarig,
             "generate_rigify_rig": self.generate_rigify_rig,
@@ -301,6 +314,7 @@ class BlenderMCPServer:
             "transfer_vertex_group_weights": self.transfer_vertex_group_weights,
             "project_vertex_group_weights": self.project_vertex_group_weights,
             "inspect_animation_data": self.inspect_animation_data,
+            "retarget_animation_clip": self.retarget_animation_clip,
             "inspect_shape_keys": self.inspect_shape_keys,
             "extract_shape_key_to_object": self.extract_shape_key_to_object,
             "create_shape_key_from_object": self.create_shape_key_from_object,
@@ -334,8 +348,12 @@ class BlenderMCPServer:
             "validate_export_readiness": self.validate_export_readiness,
             "inspect_export_texture_dependencies": self.inspect_export_texture_dependencies,
             "export_asset_package": self.export_asset_package,
+            "validate_gltf_roundtrip": self.validate_gltf_roundtrip,
+            "get_vipermesh_runtime_identity": self.get_vipermesh_runtime_identity,
             "export_object": self.export_object,
             "list_installed_addons": self.list_installed_addons,
+            "inspect_addon_capabilities": self.inspect_addon_capabilities,
+            "invoke_addon_capability": self.invoke_addon_capability,
             "create_material": self.create_material,
             "assign_material": self.assign_material,
             "create_material_preset": self.create_material_preset,
@@ -743,6 +761,17 @@ class BlenderMCPServer:
 
             return {
                 "status": health_status,
+                "scene_evidence": {
+                    key: bpy.context.scene.get(key)
+                    for key in (
+                        "vipermesh_fixture_id",
+                        "vipermesh_fixture_source",
+                        "vipermesh_fixture_license",
+                        "vipermesh_asset_glb_sha256",
+                        "vipermesh_candidate_glb_sha256",
+                    )
+                    if bpy.context.scene.get(key) is not None
+                },
                 "file": {
                     "filepath": filepath,
                     "directory": os.path.dirname(filepath) if filepath else "",
@@ -1362,7 +1391,7 @@ class BlenderMCPServer:
         except Exception as e:
             raise Exception(f"Code execution error: {str(e)}")
 
-    def save_blend_file(self, filepath, make_dirs=True, check_existing=False):
+    def save_blend_file(self, filepath, make_dirs=True, check_existing=False, copy=False):
         """Save the current .blend file to an explicit path."""
         try:
             if not filepath or not str(filepath).strip():
@@ -1382,17 +1411,56 @@ class BlenderMCPServer:
             if check_existing and os.path.exists(resolved_path):
                 return {"error": f"File already exists: {resolved_path}. Set check_existing=false to overwrite."}
 
-            bpy.ops.wm.save_as_mainfile(filepath=resolved_path, check_existing=bool(check_existing))
+            bpy.ops.wm.save_as_mainfile(filepath=resolved_path, check_existing=bool(check_existing), copy=bool(copy))
 
             return {
                 "success": True,
                 "filepath": resolved_path,
+                "copy": bool(copy),
                 "exists": os.path.exists(resolved_path),
                 "size": os.path.getsize(resolved_path) if os.path.exists(resolved_path) else None,
                 "next_safe_action": "attach this .blend path as benchmark or export evidence",
             }
         except Exception as e:
             return {"error": f"Failed to save blend file: {str(e)}"}
+
+    def restore_blend_checkpoint(self, checkpoint_filepath, original_filepath):
+        """Restore a saved checkpoint and return Blender to the original .blend path."""
+        try:
+            checkpoint_path = os.path.abspath(
+                os.path.expanduser(str(checkpoint_filepath))
+            )
+            original_path = os.path.abspath(
+                os.path.expanduser(str(original_filepath))
+            )
+            if not checkpoint_path.lower().endswith(".blend"):
+                return {"error": "checkpoint_filepath must end with .blend"}
+            if not original_path.lower().endswith(".blend"):
+                return {"error": "original_filepath must end with .blend"}
+            if not os.path.isfile(checkpoint_path):
+                return {
+                    "error": f"Checkpoint file does not exist: {checkpoint_path}"
+                }
+
+            bpy.ops.wm.open_mainfile(filepath=checkpoint_path)
+            bpy.ops.wm.save_as_mainfile(
+                filepath=original_path,
+                check_existing=False,
+            )
+            return {
+                "success": True,
+                "restored": True,
+                "checkpoint_filepath": checkpoint_path,
+                "filepath": bpy.data.filepath,
+                "original_filepath": original_path,
+                "dirty": bool(getattr(bpy.data, "is_dirty", False)),
+                "next_safe_action": "re-run inspect_blend_file_health before retrying the failed operation",
+            }
+        except Exception as e:
+            return {
+                "error": f"Failed to restore blend checkpoint: {str(e)}",
+                "restored": False,
+            }
 
     def list_materials(self):
         """List all materials in the .blend file with their node counts and linked objects"""
@@ -1982,6 +2050,135 @@ class BlenderMCPServer:
             }
         except Exception as e:
             return {"error": f"Failed to inspect spatial relations: {str(e)}"}
+
+    def inspect_mesh_intersections(self, pairs=None, max_intersections=10000, epsilon=0.000001):
+        """Inspect evaluated mesh-surface intersections for explicit object pairs."""
+        try:
+            if pairs is None:
+                pairs = []
+            if isinstance(pairs, str):
+                pairs = json.loads(pairs)
+            if not isinstance(pairs, list) or not pairs:
+                return {"error": "pairs must be a non-empty list of {subject, reference} objects"}
+            if len(pairs) > 100:
+                return {"error": "pairs may contain at most 100 checks"}
+
+            resolved_limit = max(1, min(int(max_intersections), 100000))
+            resolved_epsilon = max(0.0, min(float(epsilon), 1.0))
+            depsgraph = bpy.context.evaluated_depsgraph_get()
+            cache = {}
+
+            def object_tree(obj):
+                if obj.name in cache:
+                    return cache[obj.name]
+                evaluated = obj.evaluated_get(depsgraph)
+                mesh = evaluated.to_mesh()
+                try:
+                    mesh.calc_loop_triangles()
+                    vertices = [
+                        evaluated.matrix_world @ vertex.co
+                        for vertex in mesh.vertices
+                    ]
+                    polygons = [
+                        tuple(int(index) for index in triangle.vertices)
+                        for triangle in mesh.loop_triangles
+                    ]
+                    tree = BVHTree.FromPolygons(
+                        vertices,
+                        polygons,
+                        all_triangles=True,
+                        epsilon=resolved_epsilon,
+                    )
+                finally:
+                    evaluated.to_mesh_clear()
+                cache[obj.name] = tree
+                return tree
+
+            checked = []
+            missing_objects = []
+            for index, pair in enumerate(pairs):
+                if not isinstance(pair, dict):
+                    checked.append({
+                        "index": index,
+                        "status": "fail",
+                        "error": "pair must be an object",
+                    })
+                    continue
+                subject_name = str(
+                    pair.get("subject") or pair.get("name") or ""
+                ).strip()
+                reference_name = str(
+                    pair.get("reference") or pair.get("other_name") or ""
+                ).strip()
+                subject = bpy.data.objects.get(subject_name)
+                reference = bpy.data.objects.get(reference_name)
+                missing = [
+                    name
+                    for name, obj in (
+                        (subject_name or "subject", subject),
+                        (reference_name or "reference", reference),
+                    )
+                    if obj is None
+                ]
+                if missing:
+                    missing_objects.extend(missing)
+                    checked.append({
+                        "index": index,
+                        "subject": subject_name,
+                        "reference": reference_name,
+                        "status": "fail",
+                        "missing": missing,
+                    })
+                    continue
+                if subject.type != "MESH" or reference.type != "MESH":
+                    checked.append({
+                        "index": index,
+                        "subject": subject_name,
+                        "reference": reference_name,
+                        "status": "fail",
+                        "error": "both objects must be meshes",
+                    })
+                    continue
+                if subject == reference:
+                    checked.append({
+                        "index": index,
+                        "subject": subject_name,
+                        "reference": reference_name,
+                        "status": "fail",
+                        "error": "subject and reference must be different objects",
+                    })
+                    continue
+
+                overlaps = object_tree(subject).overlap(object_tree(reference))
+                intersection_count = len(overlaps)
+                checked.append({
+                    "index": index,
+                    "subject": subject_name,
+                    "reference": reference_name,
+                    "status": "pass" if intersection_count == 0 else "fail",
+                    "intersects": intersection_count > 0,
+                    "intersection_count": intersection_count,
+                    "sample_polygon_pairs": [
+                        [int(subject_polygon), int(reference_polygon)]
+                        for subject_polygon, reference_polygon
+                        in overlaps[:resolved_limit]
+                    ],
+                    "intersections_truncated": intersection_count > resolved_limit,
+                })
+
+            failed = [item for item in checked if item.get("status") != "pass"]
+            return {
+                "success": len(missing_objects) == 0,
+                "ready": len(failed) == 0,
+                "checked_count": len(checked),
+                "pass_count": len(checked) - len(failed),
+                "fail_count": len(failed),
+                "missing_objects": sorted(set(missing_objects)),
+                "pairs": checked,
+                "next_safe_action": "fix intersecting mesh pairs, then run inspect_mesh_intersections again",
+            }
+        except Exception as e:
+            return {"error": f"Failed to inspect mesh intersections: {str(e)}"}
 
     def inspect_scene_grounding(self, names=None, ground_z=0.0, tolerance=0.02, max_objects=100, include_supports=True):
         """Report mesh objects whose lower bounds float above ground or nearby support surfaces."""
@@ -4369,7 +4566,13 @@ class BlenderMCPServer:
                 "boundary_edges": boundary_edges,
                 "non_manifold_edges": non_manifold_edges,
                 "loose_edges": loose_edges,
-                "valid": not validate_changed and zero_area_faces == 0 and non_manifold_edges == 0,
+                "valid": (
+                    not validate_changed
+                    and zero_area_faces == 0
+                    and boundary_edges == 0
+                    and non_manifold_edges == 0
+                    and loose_edges == 0
+                ),
                 "cleanup_applied": bool(cleanup),
             }
         finally:
@@ -4875,10 +5078,12 @@ class BlenderMCPServer:
                 triangle_faces = 0
                 quad_faces = 0
                 ngon_faces = 0
+                evaluated_triangles = 0
                 material_indices = set()
                 smooth_faces = 0
                 for poly in mesh.polygons:
                     sides = len(poly.vertices)
+                    evaluated_triangles += max(0, sides - 2)
                     if sides == 3:
                         triangle_faces += 1
                     elif sides == 4:
@@ -4922,6 +5127,7 @@ class BlenderMCPServer:
                     "vertices": len(mesh.vertices),
                     "edges": len(mesh.edges),
                     "faces": face_count,
+                    "evaluated_triangles": evaluated_triangles,
                     "triangle_faces": triangle_faces,
                     "quad_faces": quad_faces,
                     "ngon_faces": ngon_faces,
@@ -4953,6 +5159,286 @@ class BlenderMCPServer:
             }
         except Exception as e:
             return {"error": f"Failed to inspect retopology readiness: {str(e)}"}
+
+    def compare_mesh_surfaces(
+        self,
+        source_name,
+        candidate_name,
+        distance_tolerance=0.01,
+        seam_tolerance=None,
+        max_surface_samples=10000,
+        max_attribute_samples=10000,
+    ):
+        """Compare two evaluated meshes without changing either object."""
+        try:
+            source = bpy.data.objects.get(str(source_name))
+            candidate = bpy.data.objects.get(str(candidate_name))
+            missing = [
+                name for name, obj in (
+                    (str(source_name), source),
+                    (str(candidate_name), candidate),
+                )
+                if obj is None
+            ]
+            if missing:
+                return {"success": False, "error": "Objects not found", "missing_names": missing}
+            invalid = [obj.name for obj in (source, candidate) if obj.type != "MESH"]
+            if invalid:
+                return {
+                    "success": False,
+                    "error": "Mesh surface comparison only supports mesh objects",
+                    "invalid_names": invalid,
+                }
+            if source == candidate:
+                return {
+                    "success": False,
+                    "error": "source_name and candidate_name must identify different objects",
+                }
+
+            distance_tolerance = float(distance_tolerance)
+            if not math.isfinite(distance_tolerance) or distance_tolerance < 0:
+                return {"success": False, "error": "distance_tolerance must be a finite non-negative number"}
+            seam_tolerance = distance_tolerance if seam_tolerance is None else float(seam_tolerance)
+            if not math.isfinite(seam_tolerance) or seam_tolerance < 0:
+                return {"success": False, "error": "seam_tolerance must be a finite non-negative number"}
+            max_surface_samples = max(1, min(int(max_surface_samples), 20000))
+            max_attribute_samples = max(1, min(int(max_attribute_samples), 20000))
+
+            depsgraph = bpy.context.evaluated_depsgraph_get()
+
+            def snapshot(obj):
+                evaluated = obj.evaluated_get(depsgraph)
+                mesh = evaluated.to_mesh()
+                try:
+                    if len(mesh.polygons) > MAX_MESH_SURFACE_COMPARISON_FACES:
+                        raise ValueError(
+                            f"{obj.name} exceeds the {MAX_MESH_SURFACE_COMPARISON_FACES} evaluated-face comparison limit"
+                        )
+                    if len(mesh.vertices) > MAX_MESH_SURFACE_COMPARISON_VERTICES:
+                        raise ValueError(
+                            f"{obj.name} exceeds the {MAX_MESH_SURFACE_COMPARISON_VERTICES} evaluated-vertex comparison limit"
+                        )
+                    matrix = evaluated.matrix_world
+                    vertices = [tuple(matrix @ vertex.co) for vertex in mesh.vertices]
+                    polygons = [tuple(polygon.vertices) for polygon in mesh.polygons]
+                    polygon_centers = []
+                    material_names = []
+                    for polygon in mesh.polygons:
+                        polygon_centers.append(tuple(matrix @ polygon.center))
+                        material = (
+                            evaluated.material_slots[polygon.material_index].material
+                            if polygon.material_index < len(evaluated.material_slots)
+                            else None
+                        )
+                        material_names.append(material.name if material else None)
+                    seam_segments = []
+                    for edge in mesh.edges:
+                        if not bool(getattr(edge, "use_seam", False)):
+                            continue
+                        start, end = edge.vertices
+                        start_point = matrix @ mesh.vertices[start].co
+                        end_point = matrix @ mesh.vertices[end].co
+                        seam_segments.append({
+                            "start": tuple(start_point),
+                            "end": tuple(end_point),
+                            "midpoint": tuple((start_point + end_point) * 0.5),
+                        })
+                    return {
+                        "vertices": vertices,
+                        "polygons": polygons,
+                        "polygon_centers": polygon_centers,
+                        "material_names": material_names,
+                        "seam_segments": seam_segments,
+                    }
+                finally:
+                    evaluated.to_mesh_clear()
+
+            def sample_indices(count, maximum):
+                if count <= maximum:
+                    return list(range(count))
+                return sorted({
+                    min(count - 1, int(index * count / maximum))
+                    for index in range(maximum)
+                })
+
+            def build_bvh(snapshot):
+                if not snapshot["vertices"] or not snapshot["polygons"]:
+                    raise ValueError("Both objects need evaluated polygon surfaces")
+                return BVHTree.FromPolygons(
+                    snapshot["vertices"],
+                    snapshot["polygons"],
+                    all_triangles=False,
+                )
+
+            def nearest_distances(points, tree, maximum):
+                distances = []
+                for index in sample_indices(len(points), maximum):
+                    nearest = tree.find_nearest(Vector(points[index]))
+                    if nearest is None or nearest[3] is None:
+                        raise ValueError("Nearest-surface comparison failed")
+                    distances.append(float(nearest[3]))
+                return distances
+
+            def polygon_center(snapshot, polygon_index):
+                return Vector(snapshot["polygon_centers"][polygon_index])
+
+            def material_mismatches(origin, target, target_tree):
+                mismatches = 0
+                compared = 0
+                for polygon_index in sample_indices(
+                    len(origin["polygons"]),
+                    max_attribute_samples,
+                ):
+                    nearest = target_tree.find_nearest(
+                        polygon_center(origin, polygon_index),
+                    )
+                    target_index = nearest[2] if nearest else None
+                    if target_index is None:
+                        mismatches += 1
+                    elif (
+                        origin["material_names"][polygon_index]
+                        != target["material_names"][target_index]
+                    ):
+                        mismatches += 1
+                    compared += 1
+                return mismatches, compared
+
+            def seam_mismatches(origin_segments, target_segments):
+                sampled = sample_indices(len(origin_segments), max_attribute_samples)
+                if not sampled:
+                    return 0, 0
+                if not target_segments:
+                    return len(sampled), len(sampled)
+                tree = KDTree(len(target_segments))
+                for index, segment in enumerate(target_segments):
+                    tree.insert(segment["midpoint"], index)
+                tree.balance()
+                mismatches = 0
+                matched_target_indices = set()
+                for index in sampled:
+                    origin = origin_segments[index]
+                    matches = sorted(
+                        tree.find_range(
+                            origin["midpoint"],
+                            max(seam_tolerance, 1e-12),
+                        ),
+                        key=lambda match: float(match[2]),
+                    )
+                    matched = False
+                    for _co, target_index, _distance in matches:
+                        if target_index in matched_target_indices:
+                            continue
+                        target = target_segments[target_index]
+                        direct = max(
+                            (Vector(origin["start"]) - Vector(target["start"])).length,
+                            (Vector(origin["end"]) - Vector(target["end"])).length,
+                        )
+                        reversed_match = max(
+                            (Vector(origin["start"]) - Vector(target["end"])).length,
+                            (Vector(origin["end"]) - Vector(target["start"])).length,
+                        )
+                        if min(direct, reversed_match) <= seam_tolerance:
+                            matched_target_indices.add(target_index)
+                            matched = True
+                            break
+                    if not matched:
+                        mismatches += 1
+                return mismatches, len(sampled)
+
+            source_snapshot = snapshot(source)
+            candidate_snapshot = snapshot(candidate)
+            source_tree = build_bvh(source_snapshot)
+            candidate_tree = build_bvh(candidate_snapshot)
+
+            source_surface_points = (
+                source_snapshot["vertices"] + source_snapshot["polygon_centers"]
+            )
+            candidate_surface_points = (
+                candidate_snapshot["vertices"] + candidate_snapshot["polygon_centers"]
+            )
+            source_distances = nearest_distances(
+                source_surface_points,
+                candidate_tree,
+                max_surface_samples,
+            )
+            candidate_distances = nearest_distances(
+                candidate_surface_points,
+                source_tree,
+                max_surface_samples,
+            )
+            all_distances = source_distances + candidate_distances
+
+            source_material_mismatches, source_material_compared = material_mismatches(
+                source_snapshot,
+                candidate_snapshot,
+                candidate_tree,
+            )
+            candidate_material_mismatches, candidate_material_compared = material_mismatches(
+                candidate_snapshot,
+                source_snapshot,
+                source_tree,
+            )
+            source_seam_mismatches, source_seams_compared = seam_mismatches(
+                source_snapshot["seam_segments"],
+                candidate_snapshot["seam_segments"],
+            )
+            candidate_seam_mismatches, candidate_seams_compared = seam_mismatches(
+                candidate_snapshot["seam_segments"],
+                source_snapshot["seam_segments"],
+            )
+
+            max_surface_deviation = max(all_distances) if all_distances else 0.0
+            return {
+                "success": True,
+                "policy_version": "mesh-surface-comparison-v1",
+                "source_object": source.name,
+                "candidate_object": candidate.name,
+                "distance_tolerance": distance_tolerance,
+                "seam_tolerance": seam_tolerance,
+                "surface_sampling_mode": "vertices-and-polygon-centers",
+                "source_vertex_count": len(source_snapshot["vertices"]),
+                "candidate_vertex_count": len(candidate_snapshot["vertices"]),
+                "source_polygon_count": len(source_snapshot["polygons"]),
+                "candidate_polygon_count": len(candidate_snapshot["polygons"]),
+                "max_surface_deviation": max_surface_deviation,
+                "mean_surface_deviation": (
+                    sum(all_distances) / len(all_distances) if all_distances else 0.0
+                ),
+                "surface_deviation_exceeds_tolerance": (
+                    max_surface_deviation > distance_tolerance
+                ),
+                "surface_sample_count": len(all_distances),
+                "surface_sampling_complete": (
+                    len(source_surface_points) <= max_surface_samples
+                    and len(candidate_surface_points) <= max_surface_samples
+                ),
+                "material_sample_count": (
+                    source_material_compared + candidate_material_compared
+                ),
+                "material_sampling_complete": (
+                    len(source_snapshot["polygons"]) <= max_attribute_samples
+                    and len(candidate_snapshot["polygons"]) <= max_attribute_samples
+                ),
+                "material_boundary_mismatch_count": (
+                    source_material_mismatches + candidate_material_mismatches
+                ),
+                "source_uv_seam_count": len(source_snapshot["seam_segments"]),
+                "candidate_uv_seam_count": len(candidate_snapshot["seam_segments"]),
+                "uv_seam_sample_count": source_seams_compared + candidate_seams_compared,
+                "uv_seam_sampling_complete": (
+                    len(source_snapshot["seam_segments"]) <= max_attribute_samples
+                    and len(candidate_snapshot["seam_segments"]) <= max_attribute_samples
+                ),
+                "uv_seam_mismatch_count": (
+                    source_seam_mismatches + candidate_seam_mismatches
+                ),
+                "note": (
+                    "This is bounded geometric evidence. The artist decides whether "
+                    "the candidate preserves the intended visual result."
+                ),
+            }
+        except Exception as e:
+            return {"success": False, "error": f"Failed to compare mesh surfaces: {str(e)}"}
 
     def decimate_mesh(
         self,
@@ -7542,6 +8028,285 @@ class BlenderMCPServer:
         except Exception as e:
             return {"error": f"Failed to project vertex group weights: {str(e)}"}
 
+    def inspect_pose_deformation(
+        self,
+        names=None,
+        baseline_frame=None,
+        stress_frames=None,
+        max_objects=20,
+        max_vertices_sample=10000,
+        max_edges_sample=20000,
+        edge_ratio_threshold=2.0,
+        displacement_epsilon=0.0001,
+    ):
+        """Inspect evaluated rigged meshes across frames without changing persistent scene data."""
+        scene = bpy.context.scene
+        original_frame = scene.frame_current
+        original_subframe = scene.frame_subframe
+        reports = []
+        try:
+            def parse_names(raw_names):
+                if raw_names is None:
+                    return []
+                if isinstance(raw_names, str):
+                    return [part.strip() for part in raw_names.split(",") if part.strip()]
+                if isinstance(raw_names, (list, tuple)):
+                    return [str(name).strip() for name in raw_names if str(name).strip()]
+                raise ValueError("names must be an array of mesh object names, a comma-separated string, or omitted")
+
+            def parse_frames(raw_frames):
+                if raw_frames is None:
+                    return [int(scene.frame_current)]
+                if isinstance(raw_frames, (int, float)):
+                    return [int(raw_frames)]
+                if isinstance(raw_frames, str):
+                    raw_frames = [part.strip() for part in raw_frames.split(",") if part.strip()]
+                if not isinstance(raw_frames, (list, tuple)):
+                    raise ValueError("stress_frames must be an array of frame numbers, a comma-separated string, or omitted")
+                frames = []
+                for value in raw_frames:
+                    frame = int(value)
+                    if frame not in frames:
+                        frames.append(frame)
+                if not frames:
+                    raise ValueError("stress_frames must contain at least one frame")
+                return frames[:24]
+
+            requested_names = parse_names(names)
+            baseline_frame = int(scene.frame_start if baseline_frame is None else baseline_frame)
+            stress_frames = parse_frames(stress_frames)
+            if baseline_frame in stress_frames:
+                return {
+                    "success": False,
+                    "error": "baseline_frame must differ from every stress frame",
+                    "baseline_frame": baseline_frame,
+                    "stress_frames": stress_frames,
+                }
+            max_objects = max(1, min(int(max_objects), 20))
+            max_vertices_sample = max(1, min(int(max_vertices_sample), 50000))
+            max_edges_sample = max(1, min(int(max_edges_sample), 100000))
+            edge_ratio_threshold = max(1.0, min(float(edge_ratio_threshold), 100.0))
+            displacement_epsilon = max(0.0, float(displacement_epsilon))
+
+            if requested_names:
+                if len(requested_names) != len(set(requested_names)):
+                    return {"success": False, "error": "names must not contain duplicates"}
+                if len(requested_names) > max_objects:
+                    return {
+                        "success": False,
+                        "error": f"names exceeds max_objects ({max_objects})",
+                    }
+                missing = [name for name in requested_names if bpy.data.objects.get(name) is None]
+                if missing:
+                    return {
+                        "error": "Objects not found",
+                        "missing_names": missing,
+                        "original_frame": original_frame,
+                    }
+                objects = [bpy.data.objects[name] for name in requested_names]
+                invalid = [obj.name for obj in objects if obj.type != "MESH"]
+                if invalid:
+                    return {
+                        "error": "Pose deformation inspection only supports mesh objects",
+                        "invalid_names": invalid,
+                        "original_frame": original_frame,
+                    }
+            else:
+                objects = [
+                    obj for obj in scene.objects
+                    if obj.type == "MESH" and any(mod.type == "ARMATURE" for mod in obj.modifiers)
+                ][:max_objects]
+
+            if not objects:
+                return {
+                    "success": False,
+                    "error": "No rigged mesh objects found",
+                    "baseline_frame": baseline_frame,
+                    "stress_frames": stress_frames,
+                    "original_frame": original_frame,
+                }
+
+            def valid_armature_modifiers(obj):
+                return [
+                    modifier for modifier in obj.modifiers
+                    if (
+                        modifier.type == "ARMATURE"
+                        and modifier.show_viewport
+                        and modifier.object is not None
+                        and modifier.object.type == "ARMATURE"
+                    )
+                ]
+
+            invalid_rigged_meshes = [
+                obj.name for obj in objects if not valid_armature_modifiers(obj)
+            ]
+            if invalid_rigged_meshes:
+                return {
+                    "success": False,
+                    "error": "Every inspected mesh needs an enabled Armature modifier with a valid armature target",
+                    "invalid_rigged_meshes": invalid_rigged_meshes,
+                }
+
+            estimated_work = (
+                len(objects)
+                * len(stress_frames)
+                * (max_vertices_sample + max_edges_sample)
+            )
+            if estimated_work > MAX_POSE_DEFORMATION_WORK:
+                return {
+                    "success": False,
+                    "error": "Requested pose deformation inspection exceeds the bounded work budget",
+                    "estimated_work": estimated_work,
+                    "max_work": MAX_POSE_DEFORMATION_WORK,
+                }
+
+            depsgraph = bpy.context.evaluated_depsgraph_get()
+
+            def evaluated_snapshot(obj):
+                evaluated = obj.evaluated_get(depsgraph)
+                mesh = evaluated.to_mesh()
+                try:
+                    vertices = [
+                        tuple(vertex.co)
+                        for vertex in itertools.islice(mesh.vertices, max_vertices_sample)
+                    ]
+                    edges = [
+                        tuple(edge.vertices)
+                        for edge in itertools.islice(mesh.edges, max_edges_sample)
+                    ]
+                    return {
+                        "vertex_count": len(mesh.vertices),
+                        "edge_count": len(mesh.edges),
+                        "vertices": vertices,
+                        "edges": edges,
+                    }
+                finally:
+                    evaluated.to_mesh_clear()
+
+            scene.frame_set(baseline_frame)
+            bpy.context.view_layer.update()
+            baselines = {obj.name: evaluated_snapshot(obj) for obj in objects}
+
+            threshold_failure_count = 0
+            reports_by_name = {
+                obj.name: {
+                    "name": obj.name,
+                    "baseline_vertex_count": baselines[obj.name]["vertex_count"],
+                    "baseline_edge_count": baselines[obj.name]["edge_count"],
+                    "sampled_vertices_truncated": (
+                        baselines[obj.name]["vertex_count"] > len(baselines[obj.name]["vertices"])
+                    ),
+                    "sampled_edges_truncated": (
+                        baselines[obj.name]["edge_count"] > len(baselines[obj.name]["edges"])
+                    ),
+                    "frames": [],
+                }
+                for obj in objects
+            }
+            for frame in stress_frames:
+                scene.frame_set(frame)
+                bpy.context.view_layer.update()
+                for obj in objects:
+                    baseline = baselines[obj.name]
+                    current = evaluated_snapshot(obj)
+                    topology_changed = (
+                        current["vertex_count"] != baseline["vertex_count"]
+                        or current["edge_count"] != baseline["edge_count"]
+                    )
+                    invalid_coordinate_count = 0
+                    deformed_vertex_count = 0
+                    displacement_total = 0.0
+                    max_displacement = 0.0
+                    compared_vertices = min(len(baseline["vertices"]), len(current["vertices"]))
+                    for index in range(compared_vertices):
+                        base_co = baseline["vertices"][index]
+                        current_co = current["vertices"][index]
+                        if not all(math.isfinite(value) for value in current_co):
+                            invalid_coordinate_count += 1
+                            continue
+                        displacement = math.sqrt(sum(
+                            (current_co[axis] - base_co[axis]) ** 2 for axis in range(3)
+                        ))
+                        displacement_total += displacement
+                        max_displacement = max(max_displacement, displacement)
+                        if displacement > displacement_epsilon:
+                            deformed_vertex_count += 1
+
+                    outlier_edge_ratio_count = 0
+                    max_symmetric_edge_ratio = 1.0
+                    compared_edges = 0
+                    if not topology_changed:
+                        for edge_index, (start, end) in enumerate(baseline["edges"]):
+                            if edge_index >= len(current["edges"]) or current["edges"][edge_index] != (start, end):
+                                topology_changed = True
+                                break
+                            if start >= compared_vertices or end >= compared_vertices:
+                                continue
+                            base_length = math.dist(baseline["vertices"][start], baseline["vertices"][end])
+                            current_length = math.dist(current["vertices"][start], current["vertices"][end])
+                            if base_length <= 1e-12:
+                                continue
+                            compared_edges += 1
+                            if current_length <= 1e-12:
+                                ratio = edge_ratio_threshold + 1.0
+                            else:
+                                ratio = max(
+                                    current_length / base_length,
+                                    base_length / current_length,
+                                )
+                            max_symmetric_edge_ratio = max(max_symmetric_edge_ratio, ratio)
+                            if ratio > edge_ratio_threshold:
+                                outlier_edge_ratio_count += 1
+
+                    threshold_failed = (
+                        topology_changed
+                        or invalid_coordinate_count > 0
+                        or outlier_edge_ratio_count > 0
+                    )
+                    if threshold_failed:
+                        threshold_failure_count += 1
+                    reports_by_name[obj.name]["frames"].append({
+                        "frame": frame,
+                        "topology_changed": topology_changed,
+                        "sampled_vertex_count": compared_vertices,
+                        "invalid_coordinate_count": invalid_coordinate_count,
+                        "deformed_vertex_count": deformed_vertex_count,
+                        "mean_displacement": (
+                            displacement_total / compared_vertices if compared_vertices else 0.0
+                        ),
+                        "max_displacement": max_displacement,
+                        "sampled_edge_count": compared_edges,
+                        "outlier_edge_ratio_count": outlier_edge_ratio_count,
+                        "max_symmetric_edge_ratio": max_symmetric_edge_ratio,
+                        "threshold_failed": threshold_failed,
+                    })
+            reports = [reports_by_name[obj.name] for obj in objects]
+
+            return {
+                "success": True,
+                "policy_version": "pose-deformation-v1",
+                "baseline_frame": baseline_frame,
+                "stress_frames": stress_frames,
+                "stress_frame_count": len(stress_frames),
+                "object_count": len(reports),
+                "thresholds": {
+                    "edge_ratio_threshold": edge_ratio_threshold,
+                    "edge_ratio_mode": "symmetric",
+                    "displacement_epsilon": displacement_epsilon,
+                },
+                "threshold_failure_count": threshold_failure_count,
+                "reports": reports,
+                "note": (
+                    "Threshold results identify mechanical anomalies only. "
+                    "The artist still decides whether deformation quality is acceptable."
+                ),
+            }
+        except Exception as e:
+            return {"error": f"Failed to inspect pose deformation: {str(e)}"}
+        finally:
+            scene.frame_set(original_frame, subframe=original_subframe)
+            bpy.context.view_layer.update()
+
     def inspect_animation_data(
         self,
         names=None,
@@ -8994,6 +9759,547 @@ class BlenderMCPServer:
             }
         except Exception as e:
             return {"error": f"Failed to set shape key value: {str(e)}"}
+
+    def retarget_animation_clip(
+        self,
+        filepath,
+        target_armature,
+        bone_map,
+        action_name,
+        export_names,
+        output_filepath,
+        source_armature=None,
+        root_motion="in_place",
+        root_source_bone=None,
+        frame_start=None,
+        frame_end=None,
+        bake_step=1,
+        cleanup_imported=True,
+        overwrite=False,
+    ):
+        """Import BVH/FBX motion, retarget it through explicit bone constraints, bake, and export a GLB candidate."""
+        imported_objects = []
+        created_data = {}
+        source_armature_name = None
+        added_constraints = []
+        baked_action = None
+        previous_action = None
+        previous_selection = list(bpy.context.selected_objects)
+        previous_active = bpy.context.view_layer.objects.active
+        previous_mode = (
+            previous_active.mode
+            if previous_active is not None
+            else "OBJECT"
+        )
+        scene = bpy.context.scene
+        previous_frame_start = int(scene.frame_start)
+        previous_frame_end = int(scene.frame_end)
+        previous_frame = int(scene.frame_current)
+        output_path = None
+        output_backup_path = None
+        exported = False
+        output_existed = False
+        backup_complete = False
+        output_touched = False
+        tracked_data = {}
+        before_names = {}
+        previous_pose = {}
+        target_had_animation_data = False
+        recovery_failed = False
+
+        def coerce_bool(value, default=False):
+            if value is None:
+                return default
+            if isinstance(value, str):
+                return value.strip().lower() in {
+                    "true",
+                    "1",
+                    "yes",
+                    "y",
+                    "on",
+                }
+            return bool(value)
+
+        def cleanup_created_imports():
+            nonlocal created_data, imported_objects
+            if before_names:
+                created_data = {
+                    key: [block for block in collection if block.name not in before_names[key]]
+                    for key, collection in tracked_data.items()
+                }
+                imported_objects = list(created_data.get("objects", []))
+            for obj in list(imported_objects):
+                if obj.name in bpy.data.objects:
+                    bpy.data.objects.remove(obj, do_unlink=True)
+            for data_name, blocks in created_data.items():
+                if data_name == "objects":
+                    continue
+                collection = getattr(bpy.data, data_name)
+                for block in list(blocks):
+                    block_name = block.name
+                    if (
+                        block is baked_action
+                        or collection.get(block_name) is None
+                        or block.users > 0
+                    ):
+                        continue
+                    collection.remove(block)
+
+        def remove_added_constraints():
+            for pose_bone, constraint in reversed(
+                added_constraints
+            ):
+                if constraint in pose_bone.constraints.values():
+                    pose_bone.constraints.remove(constraint)
+            added_constraints.clear()
+
+        def rollback():
+            nonlocal baked_action
+            with suppress(Exception):
+                if bpy.context.object and bpy.context.object.mode != "OBJECT":
+                    bpy.ops.object.mode_set(mode="OBJECT")
+            remove_added_constraints()
+            target = bpy.data.objects.get(str(target_armature))
+            if target is not None:
+                if target_had_animation_data:
+                    target.animation_data_create()
+                    target.animation_data.action = previous_action
+                elif previous_pose:
+                    target.animation_data_clear()
+            if baked_action is not None and baked_action.users == 0:
+                with suppress(Exception):
+                    bpy.data.actions.remove(baked_action)
+            baked_action = None
+            cleanup_created_imports()
+            if backup_complete and output_backup_path and os.path.isfile(output_backup_path):
+                os.replace(output_backup_path, output_path)
+            elif output_touched and not output_existed and output_path and os.path.isfile(output_path):
+                os.remove(output_path)
+            elif output_backup_path and not backup_complete and os.path.isfile(output_backup_path):
+                os.remove(output_backup_path)
+
+        try:
+            input_path = bpy.path.abspath(str(filepath))
+            input_extension = os.path.splitext(input_path)[1].lower()
+            if input_extension not in {".bvh", ".fbx"}:
+                return {
+                    "error": "filepath must point to a .bvh or .fbx motion file"
+                }
+            if not os.path.isfile(input_path):
+                return {
+                    "error": f"Motion file not found: {input_path}"
+                }
+
+            target = bpy.data.objects.get(str(target_armature))
+            if target is None or target.type != "ARMATURE":
+                return {
+                    "error": f"Target armature '{target_armature}' not found"
+                }
+            previous_action = (
+                target.animation_data.action
+                if target.animation_data
+                else None
+            )
+            target_had_animation_data = target.animation_data is not None
+            previous_pose = {bone.name: (bone.matrix_basis.copy(), bone.rotation_mode) for bone in target.pose.bones}
+            if not isinstance(bone_map, dict) or not bone_map:
+                return {
+                    "error": "bone_map must be a non-empty object mapping source bone names to target bone names"
+                }
+            normalized_map = {}
+            for source_name, target_name in bone_map.items():
+                source_key = str(source_name).strip()
+                target_key = str(target_name).strip()
+                if not source_key or not target_key:
+                    return {
+                        "error": "bone_map names must be non-empty strings"
+                    }
+                normalized_map[source_key] = target_key
+
+            resolved_action_name = str(action_name).strip()
+            if not resolved_action_name:
+                return {"error": "action_name is required"}
+            if bpy.data.actions.get(resolved_action_name) is not None:
+                return {
+                    "error": f"Action already exists: {resolved_action_name}"
+                }
+
+            if not isinstance(export_names, (list, tuple)):
+                return {
+                    "error": "export_names must be a non-empty array of explicit object names"
+                }
+            normalized_export_names = list(
+                dict.fromkeys(
+                    str(name).strip()
+                    for name in export_names
+                    if str(name).strip()
+                )
+            )
+            if not normalized_export_names:
+                return {
+                    "error": "export_names must be a non-empty array of explicit object names"
+                }
+            if target.name not in normalized_export_names:
+                return {
+                    "error": "export_names must include the target armature"
+                }
+            missing_export_names = [
+                name
+                for name in normalized_export_names
+                if bpy.data.objects.get(name) is None
+            ]
+            if missing_export_names:
+                return {
+                    "error": "Export objects not found: "
+                    + ", ".join(missing_export_names)
+                }
+
+            raw_output_path = str(output_filepath).strip()
+            if not os.path.isabs(raw_output_path):
+                return {"error": "output_filepath must be absolute"}
+            output_path = os.path.abspath(raw_output_path)
+            if os.path.splitext(output_path)[1].lower() != ".glb":
+                return {
+                    "error": "output_filepath must end with .glb"
+                }
+            output_directory = os.path.dirname(output_path)
+            if not os.path.isdir(output_directory):
+                return {
+                    "error": f"Output directory does not exist: {output_directory}"
+                }
+            if os.path.exists(output_path) and not coerce_bool(
+                overwrite,
+                False,
+            ):
+                return {
+                    "error": f"Output file already exists: {output_path}"
+                }
+            if os.path.exists(output_path):
+                output_existed = True
+                output_backup_path = (
+                    f"{output_path}.vipermesh-backup-{uuid.uuid4().hex}"
+                )
+                shutil.copy2(output_path, output_backup_path)
+                backup_complete = True
+
+            root_motion_mode = str(root_motion or "in_place").lower()
+            if root_motion_mode not in {"in_place", "preserve"}:
+                return {
+                    "error": "root_motion must be IN_PLACE or PRESERVE"
+                }
+            try:
+                step = int(bake_step)
+            except (TypeError, ValueError):
+                return {"error": "bake_step must be an integer"}
+            if step < 1 or step > 16:
+                return {
+                    "error": "bake_step must be between 1 and 16"
+                }
+
+            tracked_data = {
+                "objects": bpy.data.objects,
+                "armatures": bpy.data.armatures,
+                "meshes": bpy.data.meshes,
+                "actions": bpy.data.actions,
+                "collections": bpy.data.collections,
+                "materials": bpy.data.materials,
+                "images": bpy.data.images,
+            }
+            before_names = {
+                key: {block.name for block in collection}
+                for key, collection in tracked_data.items()
+            }
+
+            if bpy.context.object and bpy.context.object.mode != "OBJECT":
+                bpy.ops.object.mode_set(mode="OBJECT")
+            bpy.ops.object.select_all(action="DESELECT")
+            if input_extension == ".bvh":
+                import_result = bpy.ops.import_anim.bvh(
+                    filepath=input_path,
+                    target="ARMATURE",
+                    rotate_mode="NATIVE",
+                    update_scene_duration=True,
+                )
+            else:
+                import_result = bpy.ops.import_scene.fbx(
+                    filepath=input_path,
+                    use_anim=True,
+                    ignore_leaf_bones=False,
+                )
+            if "FINISHED" not in import_result:
+                raise RuntimeError(
+                    f"Motion import operator returned {sorted(import_result)}"
+                )
+
+            created_data = {
+                key: [
+                    block
+                    for block in collection
+                    if block.name not in before_names[key]
+                ]
+                for key, collection in tracked_data.items()
+            }
+            imported_objects = list(created_data["objects"])
+            imported_armatures = [
+                obj for obj in imported_objects if obj.type == "ARMATURE"
+            ]
+            if source_armature:
+                source = bpy.data.objects.get(str(source_armature))
+                if source not in imported_armatures:
+                    raise ValueError(
+                        "source_armature must name an armature imported from filepath"
+                    )
+            elif len(imported_armatures) == 1:
+                source = imported_armatures[0]
+            else:
+                raise ValueError(
+                    "Motion import must create exactly one armature unless source_armature is explicit"
+                )
+
+            source_action = (
+                source.animation_data.action
+                if source.animation_data
+                else None
+            )
+            if source_action is None:
+                raise ValueError(
+                    "Imported source armature has no active animation action"
+                )
+            source_armature_name = source.name
+
+            missing_source_bones = [
+                name
+                for name in normalized_map
+                if source.pose.bones.get(name) is None
+            ]
+            missing_target_bones = [
+                name
+                for name in normalized_map.values()
+                if target.pose.bones.get(name) is None
+            ]
+            if missing_source_bones or missing_target_bones:
+                raise ValueError(
+                    "Bone map could not be resolved; missing source bones: "
+                    + ", ".join(missing_source_bones or ["none"])
+                    + "; missing target bones: "
+                    + ", ".join(missing_target_bones or ["none"])
+                )
+
+            resolved_root_source = (
+                str(root_source_bone).strip()
+                if root_source_bone
+                else None
+            )
+            if root_motion_mode == "preserve":
+                if resolved_root_source is None:
+                    root_candidates = [
+                        source_name
+                        for source_name in normalized_map
+                        if source.pose.bones[source_name].parent is None
+                    ]
+                    if len(root_candidates) != 1:
+                        raise ValueError(
+                            "PRESERVE root motion requires root_source_bone when the mapped root is ambiguous"
+                        )
+                    resolved_root_source = root_candidates[0]
+                if resolved_root_source not in normalized_map:
+                    raise ValueError(
+                        "root_source_bone must be present in bone_map"
+                    )
+
+            target.animation_data_create()
+            baked_action = bpy.data.actions.new(
+                name=resolved_action_name
+            )
+            target.animation_data.action = baked_action
+
+            for source_name, target_name in normalized_map.items():
+                target_pose_bone = target.pose.bones[target_name]
+                rotation_constraint = (
+                    target_pose_bone.constraints.new(
+                        type="COPY_ROTATION"
+                    )
+                )
+                rotation_constraint.name = (
+                    f"ViperMesh_Retarget_Rotation_{source_name}"
+                )
+                rotation_constraint.target = source
+                rotation_constraint.subtarget = source_name
+                rotation_constraint.target_space = "POSE"
+                rotation_constraint.owner_space = "POSE"
+                rotation_constraint.mix_mode = "REPLACE"
+                added_constraints.append(
+                    (target_pose_bone, rotation_constraint)
+                )
+
+            if (
+                root_motion_mode == "preserve"
+                and resolved_root_source is not None
+            ):
+                root_target_name = normalized_map[
+                    resolved_root_source
+                ]
+                root_target_pose = target.pose.bones[
+                    root_target_name
+                ]
+                location_constraint = (
+                    root_target_pose.constraints.new(
+                        type="COPY_LOCATION"
+                    )
+                )
+                location_constraint.name = (
+                    "ViperMesh_Retarget_Root_Location"
+                )
+                location_constraint.target = source
+                location_constraint.subtarget = (
+                    resolved_root_source
+                )
+                location_constraint.target_space = "POSE"
+                location_constraint.owner_space = "POSE"
+                added_constraints.append(
+                    (root_target_pose, location_constraint)
+                )
+
+            source_start = int(math.floor(source_action.frame_range[0]))
+            source_end = int(math.ceil(source_action.frame_range[1]))
+            resolved_start = (
+                source_start
+                if frame_start is None
+                else int(frame_start)
+            )
+            resolved_end = (
+                source_end if frame_end is None else int(frame_end)
+            )
+            if resolved_start < 0 or resolved_end < resolved_start:
+                raise ValueError(
+                    "frame_start and frame_end must define a non-negative ordered range"
+                )
+            scene.frame_start = resolved_start
+            scene.frame_end = resolved_end
+            scene.frame_set(resolved_start)
+
+            bpy.ops.object.select_all(action="DESELECT")
+            target.select_set(True)
+            bpy.context.view_layer.objects.active = target
+            bpy.ops.object.mode_set(mode="POSE")
+            bpy.ops.pose.select_all(action="DESELECT")
+            for target_name in normalized_map.values():
+                target.pose.bones[target_name].select = True
+            bake_result = bpy.ops.nla.bake(
+                frame_start=resolved_start,
+                frame_end=resolved_end,
+                step=step,
+                only_selected=True,
+                visual_keying=True,
+                clear_constraints=False,
+                clear_parents=False,
+                use_current_action=True,
+                clean_curves=False,
+                bake_types={"POSE"},
+                channel_types={
+                    "LOCATION",
+                    "ROTATION",
+                    "SCALE",
+                    "BBONE",
+                    "PROPS",
+                },
+            )
+            if "FINISHED" not in bake_result:
+                raise RuntimeError(
+                    f"NLA bake operator returned {sorted(bake_result)}"
+                )
+            bpy.ops.object.mode_set(mode="OBJECT")
+            remove_added_constraints()
+            bpy.context.view_layer.update()
+
+            output_touched = True
+            export_result = self.export_object(
+                normalized_export_names,
+                output_path,
+                "GLB",
+            )
+            if export_result.get("error"):
+                raise RuntimeError(export_result["error"])
+            if coerce_bool(cleanup_imported, True):
+                cleanup_created_imports()
+
+            animation_report = self.inspect_animation_data(
+                names=[target.name],
+                include_actions=True,
+                max_actions=20,
+            )
+            if output_backup_path and os.path.isfile(output_backup_path):
+                os.remove(output_backup_path)
+                output_backup_path = None
+            exported = True
+            return {
+                "success": True,
+                "source_filepath": input_path,
+                "source_armature": source_armature_name,
+                "target_armature": target.name,
+                "bone_map": normalized_map,
+                "mapped_bone_count": len(normalized_map),
+                "root_motion": root_motion_mode,
+                "root_source_bone": resolved_root_source,
+                "action_name": baked_action.name,
+                "frame_start": resolved_start,
+                "frame_end": resolved_end,
+                "bake_step": step,
+                "cleanup_imported": coerce_bool(
+                    cleanup_imported,
+                    True,
+                ),
+                "export_names": normalized_export_names,
+                "output_filepath": output_path,
+                "file_size_bytes": export_result.get(
+                    "file_size_bytes",
+                    0,
+                ),
+                "animation_report": animation_report,
+                "next_safe_action": "run inspect_animation_data and inspect_pose_deformation, then review the exported candidate before acceptance",
+            }
+        except Exception as error:
+            try:
+                rollback()
+            except Exception as recovery_error:
+                recovery_failed = True
+                return {"error": f"Failed to retarget animation clip: {error}; recovery failed: {recovery_error}", "rolled_back": False, "recovery_backup": output_backup_path}
+            return {
+                "error": f"Failed to retarget animation clip: {str(error)}",
+                "rolled_back": True,
+            }
+        finally:
+            with suppress(Exception):
+                if bpy.context.object and bpy.context.object.mode != "OBJECT":
+                    bpy.ops.object.mode_set(mode="OBJECT")
+                bpy.ops.object.select_all(action="DESELECT")
+                for obj in previous_selection:
+                    if obj.name in bpy.data.objects:
+                        obj.select_set(True)
+                if (
+                    previous_active is not None
+                    and previous_active.name in bpy.data.objects
+                ):
+                    bpy.context.view_layer.objects.active = (
+                        previous_active
+                    )
+                    if previous_mode != "OBJECT":
+                        bpy.ops.object.mode_set(mode=previous_mode)
+                scene.frame_start = previous_frame_start
+                scene.frame_end = previous_frame_end
+                scene.frame_set(previous_frame)
+                if not exported and previous_pose:
+                    target = bpy.data.objects.get(str(target_armature))
+                    if target is not None:
+                        for name, (matrix, rotation_mode) in previous_pose.items():
+                            bone = target.pose.bones.get(name)
+                            if bone is not None:
+                                bone.rotation_mode = rotation_mode
+                                bone.matrix_basis = matrix
+                        bpy.context.view_layer.update()
+            if output_backup_path and backup_complete and not output_touched and not recovery_failed:
+                with suppress(Exception):
+                    os.remove(output_backup_path)
 
     def set_keyframe_animation(
         self,
@@ -11405,6 +12711,237 @@ class BlenderMCPServer:
         except Exception as e:
             return {"error": f"Failed to export: {str(e)}"}
 
+    def get_vipermesh_runtime_identity(self):
+        """Return a fingerprint that capability sync can bind to this exact add-on runtime."""
+        config_directory = bpy.utils.user_resource(
+            "CONFIG",
+            path="vipermesh",
+            create=True,
+        )
+        device_id_path = os.path.join(
+            config_directory,
+            "runtime-device-id",
+        )
+        runtime_device_key = None
+        if os.path.isfile(device_id_path):
+            with open(device_id_path, "r", encoding="utf-8") as device_file:
+                candidate = device_file.read().strip()
+            try:
+                runtime_device_key = str(uuid.UUID(candidate))
+            except (ValueError, AttributeError):
+                runtime_device_key = None
+        if runtime_device_key is None:
+            runtime_device_key = str(uuid.uuid4())
+            temporary_path = f"{device_id_path}.tmp"
+            with open(temporary_path, "w", encoding="utf-8") as device_file:
+                device_file.write(runtime_device_key)
+            os.replace(temporary_path, device_id_path)
+        addon_path = os.path.abspath(__file__)
+        with open(addon_path, "rb") as addon_file:
+            source_fingerprint = hashlib.sha256(
+                addon_file.read()
+            ).hexdigest()
+        return {
+            "success": True,
+            "device_key": runtime_device_key,
+            "source_fingerprint": f"sha256:{source_fingerprint}",
+            "blender_version": bpy.app.version_string,
+            "addon_version": ".".join(
+                str(value) for value in bl_info.get("version", ())
+            ),
+        }
+
+    def validate_gltf_roundtrip(self, filepath, cleanup=True):
+        """Temporarily import a glTF/GLB export, report its contents, then remove imported data."""
+        imported_objects = []
+        created_datablocks = {}
+        tracked_collections = {}
+        before_names = {}
+        previous_selection = list(bpy.context.selected_objects)
+        previous_active = bpy.context.view_layer.objects.active
+        try:
+            absolute_filepath = bpy.path.abspath(str(filepath))
+            extension = os.path.splitext(absolute_filepath)[1].lower()
+            if extension not in {".glb", ".gltf"}:
+                return {"error": "filepath must point to a .glb or .gltf file"}
+            if not os.path.isfile(absolute_filepath):
+                return {"error": f"glTF file not found: {absolute_filepath}"}
+
+            tracked_collections = {
+                "objects": bpy.data.objects,
+                "meshes": bpy.data.meshes,
+                "materials": bpy.data.materials,
+                "images": bpy.data.images,
+                "armatures": bpy.data.armatures,
+                "actions": bpy.data.actions,
+                "collections": bpy.data.collections,
+            }
+            before_names = {
+                key: {block.name for block in collection}
+                for key, collection in tracked_collections.items()
+            }
+
+            if bpy.context.object and bpy.context.object.mode != "OBJECT":
+                bpy.ops.object.mode_set(mode="OBJECT")
+            bpy.ops.object.select_all(action="DESELECT")
+            import_result = bpy.ops.import_scene.gltf(filepath=absolute_filepath)
+            if "FINISHED" not in import_result:
+                raise RuntimeError(f"glTF import operator returned {sorted(import_result)}")
+
+            created_datablocks = {
+                key: [
+                    block
+                    for block in collection
+                    if block.name not in before_names[key]
+                ]
+                for key, collection in tracked_collections.items()
+            }
+            imported_objects = list(created_datablocks["objects"])
+            reportable_objects = [
+                obj
+                for obj in imported_objects
+                if not any(
+                    collection.name == "glTF_not_exported"
+                    for collection in obj.users_collection
+                )
+            ]
+            mesh_objects = [
+                obj for obj in reportable_objects if obj.type == "MESH"
+            ]
+            armature_objects = [
+                obj for obj in reportable_objects if obj.type == "ARMATURE"
+            ]
+            def bound_armatures(obj):
+                names = set()
+                for modifier in obj.modifiers:
+                    if (
+                        modifier.type != "ARMATURE"
+                        or modifier.object is None
+                    ):
+                        continue
+                    armature = modifier.object
+                    bone_names = {
+                        bone.name for bone in armature.data.bones
+                    }
+                    vertex_group_indices = {
+                        group.index
+                        for group in obj.vertex_groups
+                        if group.name in bone_names
+                    }
+                    has_weighted_vertices = any(
+                        assignment.group in vertex_group_indices
+                        and assignment.weight > 0
+                        for vertex in obj.data.vertices
+                        for assignment in vertex.groups
+                    )
+                    if has_weighted_vertices:
+                        names.add(armature.name)
+                return sorted(names)
+
+            skinned_mesh_objects = [
+                obj
+                for obj in mesh_objects
+                if bound_armatures(obj)
+            ]
+            evaluated_triangles = sum(
+                max(0, len(poly.vertices) - 2)
+                for obj in mesh_objects
+                for poly in obj.data.polygons
+            )
+            material_names = sorted({
+                slot.material.name
+                for obj in mesh_objects
+                for slot in obj.material_slots
+                if slot.material
+            })
+            missing_images = sorted({
+                image.name
+                for image in created_datablocks["images"]
+                if image.source == "FILE"
+                and not image.packed_file
+                and image.filepath
+                and not os.path.isfile(bpy.path.abspath(image.filepath, library=image.library))
+            })
+            issues = []
+            if not reportable_objects:
+                issues.append("no_objects_imported")
+            if not mesh_objects:
+                issues.append("no_meshes_imported")
+            if missing_images:
+                issues.append("missing_images")
+            with open(absolute_filepath, "rb") as checkpoint_file:
+                checkpoint_sha256 = hashlib.sha256(
+                    checkpoint_file.read()
+                ).hexdigest()
+
+            return {
+                "success": True,
+                "roundtrip_valid": len(issues) == 0,
+                "filepath": absolute_filepath,
+                "sha256": checkpoint_sha256,
+                "file_size_bytes": os.path.getsize(absolute_filepath),
+                "object_count": len(reportable_objects),
+                "mesh_count": len(mesh_objects),
+                "armature_count": len(armature_objects),
+                "skinned_mesh_count": len(skinned_mesh_objects),
+                "material_count": len(material_names),
+                "image_count": len(created_datablocks["images"]),
+                "action_count": len(created_datablocks["actions"]),
+                "evaluated_triangles": evaluated_triangles,
+                "objects": [
+                    {"name": obj.name, "type": obj.type}
+                    for obj in reportable_objects
+                ],
+                "skinned_meshes": [
+                    {
+                        "name": obj.name,
+                        "armatures": bound_armatures(obj),
+                    }
+                    for obj in skinned_mesh_objects
+                ],
+                "armatures": [
+                    {
+                        "name": obj.name,
+                        "bones": [
+                            bone.name for bone in obj.data.bones
+                        ],
+                    }
+                    for obj in armature_objects
+                ],
+                "materials": material_names,
+                "missing_images": missing_images,
+                "issues": issues,
+                "cleanup_requested": bool(cleanup),
+                "next_safe_action": "use the imported evidence to approve the export" if not issues else "fix round-trip issues before approving the export",
+            }
+        except Exception as e:
+            return {"error": f"Failed to validate glTF round trip: {str(e)}"}
+        finally:
+            if cleanup:
+                with suppress(Exception):
+                    if before_names:
+                        created_datablocks = {
+                            key: [block for block in collection if block.name not in before_names[key]]
+                            for key, collection in tracked_collections.items()
+                        }
+                        imported_objects = list(created_datablocks.get("objects", []))
+                    if bpy.context.object and bpy.context.object.mode != "OBJECT":
+                        bpy.ops.object.mode_set(mode="OBJECT")
+                    for obj in imported_objects:
+                        if obj.name in bpy.data.objects:
+                            bpy.data.objects.remove(obj, do_unlink=True)
+                    for key in ("collections", "actions", "armatures", "meshes", "materials", "images"):
+                        collection = getattr(bpy.data, key)
+                        for block in created_datablocks.get(key, []):
+                            if block.name in collection and block.users == 0:
+                                collection.remove(block)
+                    bpy.ops.object.select_all(action="DESELECT")
+                    for obj in previous_selection:
+                        if obj.name in bpy.data.objects:
+                            obj.select_set(True)
+                    if previous_active and previous_active.name in bpy.data.objects:
+                        bpy.context.view_layer.objects.active = previous_active
+
     # ---------- Phase 3: Dynamic Addon Detection ----------
 
     def list_installed_addons(self):
@@ -11436,6 +12973,377 @@ class BlenderMCPServer:
             }
         except Exception as e:
             return {"error": f"Failed to list addons: {str(e)}"}
+
+    def _json_safe_rna_value(self, value):
+        if value is None or isinstance(value, (str, int, float, bool)):
+            return value
+        if isinstance(value, (list, tuple, set)):
+            return [self._json_safe_rna_value(item) for item in value]
+        try:
+            return [self._json_safe_rna_value(item) for item in value]
+        except (TypeError, AttributeError):
+            return str(value)
+
+    def _find_operator_class(self, operator_id):
+        queue = list(bpy.types.Operator.__subclasses__())
+        seen = set()
+        while queue:
+            operator_class = queue.pop()
+            if operator_class in seen:
+                continue
+            seen.add(operator_class)
+            if getattr(operator_class, "bl_idname", "") == operator_id:
+                return operator_class
+            queue.extend(operator_class.__subclasses__())
+        return None
+
+    def _operator_callable(self, operator_id):
+        if not isinstance(operator_id, str) or operator_id.count(".") != 1:
+            raise ValueError("operator_id must use Blender's category.operation form")
+        category, operation = operator_id.split(".", 1)
+        operator_group = getattr(bpy.ops, category, None)
+        operator_callable = getattr(operator_group, operation, None) if operator_group else None
+        if operator_callable is None:
+            raise ValueError(f"Blender operator is not registered: {operator_id}")
+        return operator_callable
+
+    def _rna_property_schema(self, prop):
+        scalar_types = {
+            "BOOLEAN": "boolean",
+            "INT": "integer",
+            "FLOAT": "number",
+            "STRING": "string",
+            "ENUM": "string",
+        }
+        value_schema = {"type": scalar_types.get(prop.type, "unsupported")}
+        supported = prop.type in scalar_types
+        if prop.type == "ENUM":
+            value_schema["enum"] = [
+                item.identifier
+                for item in prop.enum_items
+                if getattr(item, "identifier", "")
+            ]
+            if getattr(prop, "is_enum_flag", False):
+                value_schema = {
+                    "type": "array",
+                    "items": value_schema,
+                    "uniqueItems": True,
+                }
+        if prop.type in {"INT", "FLOAT"}:
+            value_schema["minimum"] = prop.hard_min
+            value_schema["maximum"] = prop.hard_max
+        if getattr(prop, "array_length", 0) > 0:
+            value_schema = {
+                "type": "array",
+                "items": value_schema,
+                "minItems": prop.array_length,
+                "maxItems": prop.array_length,
+            }
+        default_source = (
+            getattr(prop, "default_flag", None)
+            if prop.type == "ENUM" and getattr(prop, "is_enum_flag", False)
+            else getattr(prop, "default_array", None)
+            if getattr(prop, "array_length", 0) > 0
+            else getattr(prop, "default", None)
+        )
+        default = self._json_safe_rna_value(default_source)
+        if default is not None:
+            value_schema["default"] = default
+        return {
+            "identifier": prop.identifier,
+            "name": prop.name or prop.identifier,
+            "description": prop.description or "",
+            "schema": value_schema,
+            "supported": supported and not prop.is_readonly,
+            "read_only": bool(prop.is_readonly),
+            "hidden": bool(getattr(prop, "is_hidden", False)),
+            "subtype": str(getattr(prop, "subtype", "NONE")),
+            "enum_flag": prop.type == "ENUM" and bool(getattr(prop, "is_enum_flag", False)),
+        }
+
+    def _inspect_addon_operator(self, addon_module, operator_id, addon_version=""):
+        operator_class = self._find_operator_class(operator_id)
+        if operator_class is None:
+            raise ValueError(f"Unable to resolve operator class: {operator_id}")
+        class_module = getattr(operator_class, "__module__", "")
+        if class_module != addon_module and not class_module.startswith(f"{addon_module}."):
+            raise ValueError(
+                f"Operator {operator_id} is owned by {class_module or 'an unknown module'}, "
+                f"not {addon_module}"
+            )
+
+        operator_callable = self._operator_callable(operator_id)
+        properties = []
+        for prop in operator_callable.get_rna_type().properties:
+            if prop.identifier == "rna_type":
+                continue
+            properties.append(self._rna_property_schema(prop))
+        input_schema = {
+            "type": "object",
+            "properties": {
+                prop["identifier"]: prop["schema"]
+                for prop in properties
+                if prop["supported"] and not prop["hidden"]
+            },
+            "additionalProperties": False,
+        }
+        try:
+            poll_available = bool(operator_callable.poll())
+            poll_error = None
+        except Exception as exc:
+            poll_available = False
+            poll_error = str(exc)
+
+        fingerprint_payload = {
+            "addon_module": addon_module,
+            "addon_version": addon_version,
+            "blender_version": ".".join(str(v) for v in bpy.app.version),
+            "operator_id": operator_id,
+            "properties": properties,
+            "implementation": self._operator_implementation_fingerprint(operator_class),
+        }
+        fingerprint = hashlib.sha256(
+            json.dumps(
+                fingerprint_payload,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
+        return {
+            "operator_id": operator_id,
+            "label": getattr(operator_class, "bl_label", "") or operator_id,
+            "description": getattr(operator_class, "bl_description", "") or "",
+            "class_module": class_module,
+            "input_schema": input_schema,
+            "properties": properties,
+            "poll_available": poll_available,
+            "poll_error": poll_error,
+            "source_fingerprint": f"sha256:{fingerprint}",
+        }
+
+    def _operator_implementation_fingerprint(self, operator_class):
+        provenance = {}
+        try:
+            source_path = inspect.getsourcefile(operator_class)
+        except (TypeError, OSError):
+            source_path = None
+        if source_path and os.path.isfile(source_path):
+            digest = hashlib.sha256()
+            with open(source_path, "rb") as source:
+                for chunk in iter(lambda: source.read(65536), b""):
+                    digest.update(chunk)
+            provenance["module_sha256"] = digest.hexdigest()
+        for name in ("execute", "invoke", "poll", "modal", "draw", "__init__"):
+            function = getattr(operator_class, name, None)
+            function = getattr(function, "__func__", function)
+            code = getattr(function, "__code__", None)
+            if code is not None:
+                payload = marshal.dumps(code) + repr(getattr(function, "__defaults__", None)).encode("utf-8")
+                provenance[name] = hashlib.sha256(payload).hexdigest()
+        if not provenance:
+            raise ValueError("Operator implementation provenance is unavailable; review a custom invocation instead")
+        return provenance
+
+    def _enabled_addon_metadata(self, addon_module):
+        import addon_utils
+
+        if addon_module not in bpy.context.preferences.addons:
+            raise ValueError(f"Addon is not enabled: {addon_module}")
+        for module in addon_utils.modules():
+            if module.__name__ != addon_module:
+                continue
+            bl_info = getattr(module, "bl_info", {})
+            version = bl_info.get("version", ())
+            version_label = ".".join(str(part) for part in version) if version else ""
+            return {
+                "module": addon_module,
+                "name": bl_info.get("name", addon_module),
+                "version": version_label,
+                "description": bl_info.get("description", ""),
+            }
+        return {
+            "module": addon_module,
+            "name": addon_module,
+            "version": "",
+            "description": "",
+        }
+
+    def inspect_addon_capabilities(
+        self,
+        addon_module,
+        operator_ids=None,
+        max_operators=100,
+    ):
+        """Inspect enabled add-on operators and RNA inputs without executing them."""
+        try:
+            addon = self._enabled_addon_metadata(addon_module)
+            max_operators = max(1, min(int(max_operators), 250))
+            if operator_ids is None:
+                operator_ids = sorted({
+                    getattr(operator_class, "bl_idname", "")
+                    for operator_class in self._all_operator_classes()
+                    if (
+                        getattr(operator_class, "__module__", "") == addon_module
+                        or getattr(operator_class, "__module__", "").startswith(
+                            f"{addon_module}."
+                        )
+                    )
+                    and getattr(operator_class, "bl_idname", "")
+                })
+            if not isinstance(operator_ids, (list, tuple)):
+                return {"error": "operator_ids must be an array when provided"}
+
+            unique_operator_ids = list(dict.fromkeys(operator_ids))
+            capabilities = []
+            errors = []
+            for operator_id in unique_operator_ids[:max_operators]:
+                try:
+                    capabilities.append(
+                        self._inspect_addon_operator(
+                            addon_module,
+                            operator_id,
+                            addon["version"],
+                        )
+                    )
+                except Exception as exc:
+                    errors.append({"operator_id": operator_id, "error": str(exc)})
+            inventory_payload = {
+                "addon": addon,
+                "blender_version": ".".join(str(v) for v in bpy.app.version),
+                "capability_fingerprints": [
+                    capability["source_fingerprint"] for capability in capabilities
+                ],
+            }
+            inventory_fingerprint = hashlib.sha256(
+                json.dumps(
+                    inventory_payload,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ).encode("utf-8")
+            ).hexdigest()
+            return {
+                "addon": addon,
+                "blender_version": inventory_payload["blender_version"],
+                "capabilities": capabilities,
+                "count": len(capabilities),
+                "total_operator_count": len(unique_operator_ids),
+                "truncated": len(unique_operator_ids) > max_operators,
+                "errors": errors,
+                "inventory_fingerprint": f"sha256:{inventory_fingerprint}",
+                "executed_operators": 0,
+            }
+        except Exception as e:
+            return {"error": f"Failed to inspect addon capabilities: {str(e)}"}
+
+    def _all_operator_classes(self):
+        queue = list(bpy.types.Operator.__subclasses__())
+        seen = set()
+        while queue:
+            operator_class = queue.pop()
+            if operator_class in seen:
+                continue
+            seen.add(operator_class)
+            yield operator_class
+            queue.extend(operator_class.__subclasses__())
+
+    def _addon_invocation_scene_state(self):
+        active = bpy.context.view_layer.objects.active
+        return {
+            "object_count": len(bpy.context.scene.objects),
+            "objects": sorted(obj.name for obj in bpy.context.scene.objects),
+            "selected": sorted(obj.name for obj in bpy.context.selected_objects),
+            "active": active.name if active else None,
+            "mode": bpy.context.mode,
+        }
+
+    def invoke_addon_capability(
+        self,
+        addon_module,
+        operator_id,
+        arguments=None,
+        expected_source_fingerprint=None,
+        dry_run=True,
+        approved=False,
+        checkpoint_filepath=None,
+    ):
+        """Dry-run or explicitly invoke one fingerprint-matched enabled add-on operator."""
+        try:
+            addon = self._enabled_addon_metadata(addon_module)
+            capability = self._inspect_addon_operator(
+                addon_module,
+                operator_id,
+                addon["version"],
+            )
+            if expected_source_fingerprint != capability["source_fingerprint"]:
+                return {
+                    "error": "Capability fingerprint is missing or stale; inspect again",
+                    "actual_source_fingerprint": capability["source_fingerprint"],
+                }
+            arguments = arguments or {}
+            if not isinstance(arguments, dict):
+                return {"error": "arguments must be an object"}
+            supported_properties = capability["input_schema"]["properties"]
+            unknown_arguments = sorted(set(arguments) - set(supported_properties))
+            if unknown_arguments:
+                return {
+                    "error": "Invocation contains unknown or unsupported arguments",
+                    "unknown_arguments": unknown_arguments,
+                }
+            if not capability["poll_available"]:
+                return {
+                    "error": "Operator is unavailable in the current Blender context",
+                    "poll_error": capability["poll_error"],
+                }
+            if dry_run:
+                return {
+                    "success": True,
+                    "dry_run": True,
+                    "would_invoke": operator_id,
+                    "arguments": arguments,
+                    "capability": capability,
+                    "executed_operators": 0,
+                }
+            if approved is not True:
+                return {"error": "Explicit approved=true is required for invocation"}
+            if (
+                not isinstance(checkpoint_filepath, str)
+                or not os.path.isabs(checkpoint_filepath)
+                or not checkpoint_filepath.lower().endswith(".blend")
+            ):
+                return {
+                    "error": "An absolute .blend checkpoint_filepath is required"
+                }
+
+            os.makedirs(os.path.dirname(checkpoint_filepath), exist_ok=True)
+            if os.path.exists(checkpoint_filepath):
+                return {"error": "Checkpoint already exists; choose a fresh checkpoint path"}
+            saved = bpy.ops.wm.save_as_mainfile(filepath=checkpoint_filepath, copy=True)
+            if "FINISHED" not in saved or not os.path.isfile(checkpoint_filepath):
+                return {"error": "Checkpoint save did not finish; operator was not invoked", "executed_operators": 0}
+            enum_flags = {prop["identifier"] for prop in capability["properties"] if prop.get("enum_flag")}
+            for key in enum_flags & set(arguments):
+                if not isinstance(arguments[key], list) or any(not isinstance(value, str) for value in arguments[key]):
+                    return {"error": f"Enum flag argument {key} must be an array of strings", "executed_operators": 0}
+            runtime_arguments = {key: set(value) if key in enum_flags else value for key, value in arguments.items()}
+            before = self._addon_invocation_scene_state()
+            result = self._operator_callable(operator_id)(**runtime_arguments)
+            after = self._addon_invocation_scene_state()
+            if "FINISHED" not in result:
+                return {"success": False, "error": f"Operator did not finish: {sorted(result)}", "checkpoint_filepath": checkpoint_filepath, "executed_operators": 1, "before": before, "after": after}
+            return {
+                "success": True,
+                "dry_run": False,
+                "operator_id": operator_id,
+                "operator_result": sorted(str(item) for item in result),
+                "arguments": arguments,
+                "checkpoint_filepath": checkpoint_filepath,
+                "source_fingerprint": capability["source_fingerprint"],
+                "before": before,
+                "after": after,
+                "executed_operators": 1,
+            }
+        except Exception as e:
+            return {"error": f"Failed to invoke addon capability: {str(e)}"}
 
     # ---------- Phase 5: Material / Lighting / Camera / Render Tools ----------
 

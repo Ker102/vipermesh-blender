@@ -2,8 +2,8 @@
 
 > ViperMesh for Blender is an open-source local Blender addon and persistent
 > Model Context Protocol server for AI agents. It exposes deterministic 3D
-> scene operations, structured inspection, bounded batching, local task
-> guidance, and an explicit custom Python fallback.
+> scene operations, structured inspection, bounded batching, portable tool
+> skills, and an explicit custom Python fallback.
 
 Canonical repository: https://github.com/Ker102/vipermesh-blender
 License: MIT
@@ -14,6 +14,8 @@ Transport: MCP over stdio, then a loopback TCP bridge to Blender
 
 - README: https://github.com/Ker102/vipermesh-blender#readme
 - Connector manual: https://github.com/Ker102/vipermesh-blender/blob/main/docs/portable-blender-mcp.md
+- MCP client setup: https://github.com/Ker102/vipermesh-blender/blob/main/docs/client-setup.md
+- Agent skill: https://github.com/Ker102/vipermesh-blender/blob/main/skills/using-vipermesh-blender/SKILL.md
 - Security boundary: https://github.com/Ker102/vipermesh-blender/blob/main/SECURITY.md
 - Releases: https://github.com/Ker102/vipermesh-blender/releases
 
@@ -24,5 +26,6 @@ Transport: MCP over stdio, then a loopback TCP bridge to Blender
 - Agents should call bootstrap_vipermesh_session first.
 - Deterministic tools are preferred when they cover the task.
 - execute_code remains available for genuinely custom Blender work.
+- Public tool skills provide adaptable patterns, not mandatory scene recipes.
 - The public connector does not include ViperMesh authentication, billing,
   private prompts, private RAG data, cloud model routing, or asset catalogs.

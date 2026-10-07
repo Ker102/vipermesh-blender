@@ -7,7 +7,7 @@ export const VIPERMESH_MCP_INSTRUCTIONS = `ViperMesh for Blender uses one persis
 Do not launch npm, npx, tsx, or another MCP subprocess for individual Blender operations.
 Call bootstrap_vipermesh_session once before the first Blender mutation.
 Inspect the scene before editing, prefer deterministic Blender tools, group only already-decided operations, and retain execute_code for genuinely custom work.
-Use a build, inspect/repair, and finalize workflow. Validate support, orientation, clearance, framing, and the final visual artifact before accepting a scene.`
+Choose task-appropriate inspection and repair points. Validate requested relationships and inspect the actual output before accepting it; file-health checks do not judge appearance. Save only requested artifacts to approved paths.`
 
 export const VIPERMESH_CONNECTOR_MANUAL = `# ViperMesh for Blender connector manual
 
@@ -36,8 +36,13 @@ geometry, procedural effects, unusual node graphs, and other uncovered work.
 
 ## Acceptance
 
-Before saving, inspect required-object presence, relative scale, orientation,
+Before completion, inspect required-object presence, relative scale, orientation,
 support, interpenetration, clearance, occlusion, camera framing, and lighting.
 Do not accept an object merely because one camera angle hides a structural
-problem. Review the final rendered artifact before declaring completion.
+problem. Open the requested artifact before declaring completion. Image-file
+health checks do not establish appearance or correctness. Report unresolved
+defects explicitly; do not assume a successful tool call met the user's goal.
+Save a blend file only when requested and to an approved path. Rendering or
+inspection does not require saving. Staged helpers may change camera/lighting;
+use preservePresentation on finalize, or standalone tools, to retain them.
 `

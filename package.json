@@ -1,12 +1,12 @@
 {
   "name": "vipermesh-blender-mcp",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Persistent Model Context Protocol server and deterministic Blender addon for AI agents",
   "license": "MIT",
   "private": false,
   "type": "module",
   "author": "ViperMesh contributors",
-  "homepage": "https://github.com/Ker102/vipermesh-blender#readme",
+  "homepage": "https://ker102.github.io/vipermesh-blender/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Ker102/vipermesh-blender.git"
@@ -26,7 +26,7 @@
   "bin": {
     "vipermesh-blender": "./dist/public-portable-blender-mcp.js"
   },
-  "files": ["addon", "data", "dist", "docs", "README.md", "LICENSE"],
+  "files": ["addon", "dist", "docs", "skills", "README.md", "LICENSE"],
   "scripts": {
     "mcp": "tsx scripts/public-portable-blender-mcp.ts",
     "build": "tsup scripts/public-portable-blender-mcp.ts --format esm --platform node --out-dir dist --clean",
@@ -37,7 +37,7 @@
     "prepublishOnly": "npm run check"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.32.1",
     "zod": "^3.23.8"
   },
   "devDependencies": {

@@ -2,6 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { z } from "zod"
 
 import type { PortableMcpService } from "./service"
+import { readPreviewImage } from "./preview"
 import {
   VIPERMESH_CONNECTOR_MANUAL,
   VIPERMESH_CONNECTOR_MANUAL_URI,
@@ -48,7 +49,7 @@ function toolError(error: unknown) {
 export function createPortableBlenderMcpServer(service: PortableMcpService) {
   const server = new McpServer({
     name: "vipermesh-blender",
-    version: "1.2.0",
+    version: "1.3.0",
   }, {
     instructions: VIPERMESH_MCP_INSTRUCTIONS,
   })
@@ -155,7 +156,11 @@ export function createPortableBlenderMcpServer(service: PortableMcpService) {
     async ({ name, params }) => {
       try {
         const result = await service.callBlenderTool(name, params)
-        return structuredResult(result as Record<string, unknown>)
+        const imagePath = name === "inspect_render_artifact" ? params.image_path
+          : name === "render_image" || name === "render_thumbnail_to_path" ? params.output_path : undefined
+        const preview = result.status === "success" && typeof imagePath === "string" ? await readPreviewImage(imagePath) : undefined
+        const response = structuredResult({ ...result, ...(imagePath ? { visualReviewRequired: true, imageAttached: !!preview } : {}) })
+        return { ...response, content: [...response.content, ...(preview ? [preview] : [])] }
       } catch (error) {
         return toolError(error)
       }
@@ -202,6 +207,7 @@ export function createPortableBlenderMcpServer(service: PortableMcpService) {
         previewPath: z.string().trim().min(1).max(2_048).optional(),
         renderPath: z.string().trim().min(1).max(2_048).optional(),
         blendPath: z.string().trim().min(1).max(2_048).optional(),
+        preservePresentation: z.boolean().optional(),
         preset: z.enum(["studio", "product", "indoor", "exterior", "night"]).optional(),
         cameraName: z.string().trim().min(1).max(256).optional(),
         resolutionX: z.number().int().min(64).max(8_192).optional(),
@@ -212,7 +218,12 @@ export function createPortableBlenderMcpServer(service: PortableMcpService) {
     },
     async (input) => {
       try {
-        return structuredResult(await service.runBlenderSceneStage(input))
+        const result = await service.runBlenderSceneStage(input)
+        const imagePath = input.stage === "inspect_preview" ? input.previewPath : input.stage === "finalize" ? input.renderPath : undefined
+        const inspected = result.results.some((item) => item.name === "inspect_render_artifact" && item.success === true)
+        const preview = imagePath && inspected ? await readPreviewImage(imagePath) : undefined
+        const response = structuredResult({ ...result, visualReviewRequired: !!imagePath, imageAttached: !!preview })
+        return { ...response, content: [...response.content, ...(preview ? [preview] : [])] }
       } catch (error) {
         return toolError(error)
       }
@@ -241,7 +252,7 @@ export function createPortableBlenderMcpServer(service: PortableMcpService) {
     {
       title: "Search 3D Guidance",
       description:
-        "Search checked-in ViperMesh 3D tool guides and optionally the configured semantic guidance store.",
+        "Search checked-in ViperMesh 3D tool skills and optionally the configured semantic guidance store.",
       inputSchema: z.object({
         query: z.string().trim().min(1).max(2_000),
         limit: z.number().int().min(1).max(20).optional(),
@@ -263,7 +274,7 @@ export function createPortableBlenderMcpServer(service: PortableMcpService) {
     {
       title: "Get 3D Guidance Document",
       description:
-        "Read one approved Markdown document from the checked-in ViperMesh tool-guide directory.",
+        "Read one approved Markdown reference from the checked-in ViperMesh agent skill.",
       inputSchema: z.object({
         filename: z.string().trim().min(1).max(255),
       }),

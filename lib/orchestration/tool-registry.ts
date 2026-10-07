@@ -69,7 +69,14 @@ export const TOOL_REGISTRY: ToolMetadata[] = [
     description:
       "Save the current Blender scene to an explicit .blend filepath without generated Python. Use for review artifacts, handoff checkpoints, and export/package workflows.",
     category: "advanced",
-    parameters: "filepath: string (.blend), make_dirs?: boolean, check_existing?: boolean",
+    parameters: "filepath: string (.blend), make_dirs?: boolean, check_existing?: boolean, copy?: boolean",
+  },
+  {
+    name: "restore_blend_checkpoint",
+    description:
+      "Restore a saved .blend checkpoint after a failed guarded mutation and return Blender to the original file path.",
+    category: "advanced",
+    parameters: "checkpoint_filepath: string (.blend), original_filepath: string (.blend)",
   },
   {
     name: "get_viewport_screenshot",
@@ -170,6 +177,14 @@ export const TOOL_REGISTRY: ToolMetadata[] = [
     category: "inspection",
     parameters:
       "relations: Array<{type, subject, reference?, other?, margin?, local_axis?, min_dot?}>, tolerance?: number",
+  },
+  {
+    name: "inspect_mesh_intersections",
+    description:
+      "Inspect evaluated mesh-surface intersections for explicit object pairs using Blender BVH geometry. Use when bounds-only clearance cannot prove clothing, collision, or assembly penetration.",
+    category: "inspection",
+    parameters:
+      "pairs: Array<{subject: string, reference: string}>, max_intersections?: number, epsilon?: number",
   },
   {
     name: "inspect_scene_grounding",
@@ -341,6 +356,22 @@ export const TOOL_REGISTRY: ToolMetadata[] = [
     parameters: "(no parameters)",
   },
   {
+    name: "inspect_addon_capabilities",
+    description:
+      "Inspect registered Blender operator RNA for one enabled add-on without executing any operator. Returns typed inputs, current-context availability, provenance fingerprints, and inspection errors for personal capability onboarding.",
+    category: "inspection",
+    parameters:
+      "addon_module: string, operator_ids?: string[], max_operators?: number (default 100, max 250)",
+  },
+  {
+    name: "invoke_addon_capability",
+    description:
+      "Dry-run or invoke one inspected third-party add-on operator. Real invocation requires the exact current fingerprint, approved=true, and an absolute .blend checkpoint path; dry_run defaults to true.",
+    category: "advanced",
+    parameters:
+      "addon_module: string, operator_id: string, arguments?: object, expected_source_fingerprint: string, dry_run?: boolean, approved?: boolean, checkpoint_filepath?: string",
+  },
+  {
     name: "create_material",
     description:
       "Create a basic Blender material with structured color and shader parameters when a full preset is unnecessary.",
@@ -478,6 +509,13 @@ export const TOOL_REGISTRY: ToolMetadata[] = [
     category: "advanced",
     parameters:
       "names: string[], file_format?: GLB|GLTF|FBX|OBJ|STL, max_dependencies?: number, check_texture_formats?: boolean",
+  },
+  {
+    name: "validate_gltf_roundtrip",
+    description:
+      "Temporarily import a GLB or glTF export, inventory meshes, armature bones, skinned meshes, materials, images, actions, and triangle count, then clean up the imported data by default.",
+    category: "advanced",
+    parameters: "filepath: string, cleanup?: boolean",
   },
   {
     name: "set_world_environment",
@@ -688,6 +726,14 @@ export const TOOL_REGISTRY: ToolMetadata[] = [
       "names?: string[], max_objects?: number, high_density_face_threshold?: number",
   },
   {
+    name: "compare_mesh_surfaces",
+    description:
+      "Compare source and candidate evaluated meshes using bounded bidirectional vertex and polygon-center surface deviation, nearest material-region correspondence, and coverage-aware UV seam position correspondence. Read-only and intended for topology or LOD evidence before artist acceptance.",
+    category: "inspection",
+    parameters:
+      "source_name: string, candidate_name: string, distance_tolerance?: number, seam_tolerance?: number, max_surface_samples?: number, max_attribute_samples?: number",
+  },
+  {
     name: "decimate_mesh",
     description:
       "Create a lower-density mesh with Blender's Decimate modifier. Defaults to source-preserving COPY mode; use REPLACE only for explicit destructive decimation.",
@@ -750,6 +796,14 @@ export const TOOL_REGISTRY: ToolMetadata[] = [
     category: "inspection",
     parameters:
       "names?: string[], max_objects?: number, max_vertices_sample?: number, max_influences?: number, weight_sum_tolerance?: number",
+  },
+  {
+    name: "inspect_pose_deformation",
+    description:
+      "Non-mutating stress pose inspection for evaluated rigged meshes. Reports sampled displacement, invalid coordinates, topology changes, and symmetric stretch/compression outliers while restoring the artist's current frame and subframe.",
+    category: "inspection",
+    parameters:
+      "names?: string[] (max 20), baseline_frame?: number, stress_frames?: number[] (max 24), max_objects?: number, max_vertices_sample?: number, max_edges_sample?: number, edge_ratio_threshold?: number, displacement_epsilon?: number",
   },
   {
     name: "normalize_vertex_group_weights",
@@ -838,6 +892,14 @@ export const TOOL_REGISTRY: ToolMetadata[] = [
     category: "inspection",
     parameters:
       "names?: string[], include_materials?: boolean, include_actions?: boolean, max_keyframes_per_curve?: number, max_objects?: number, max_materials?: number, max_actions?: number",
+  },
+  {
+    name: "retarget_animation_clip",
+    description:
+      "Import a BVH or FBX motion clip, retarget an explicit source-to-target bone map through temporary constraints, bake a new target action, clean imported data, and export explicit objects as a GLB candidate with rollback on failure.",
+    category: "advanced",
+    parameters:
+      "filepath: string, target_armature: string, bone_map: Record<string,string>, action_name: string, export_names: string[], output_filepath: string (.glb), source_armature?: string, root_motion?: IN_PLACE|PRESERVE, root_source_bone?: string, frame_start?: number, frame_end?: number, bake_step?: number, cleanup_imported?: boolean, overwrite?: boolean",
   },
   {
     name: "inspect_shape_keys",
