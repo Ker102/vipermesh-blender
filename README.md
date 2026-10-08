@@ -1,4 +1,8 @@
-# ViperMesh for Blender
+<div align="center">
+
+<img src="site/assets/readme-mark.svg" alt="" width="56" height="56">
+
+<h1>ViperMesh for Blender</h1>
 
 [![CI](https://github.com/Ker102/vipermesh-blender/actions/workflows/ci.yml/badge.svg)](https://github.com/Ker102/vipermesh-blender/actions/workflows/ci.yml)
 [![GitHub release](https://img.shields.io/github/v/release/Ker102/vipermesh-blender?display_name=tag)](https://github.com/Ker102/vipermesh-blender/releases)
@@ -7,8 +11,19 @@
 
 **AI assistance for Blender, with less code and less waiting.**
 
+Designed for faster scene edits, fewer AI tokens and better-checked results.
+
+<p>
+<a href="https://github.com/Ker102/vipermesh-blender/releases/latest"><img src="site/assets/readme-download.svg" alt="Download Blender addon" width="220" height="44"></a>
+<a href="docs/client-setup.md"><img src="site/assets/readme-setup.svg" alt="Setup guide" width="160" height="44"></a>
+</p>
+
 [Project overview and setup](https://ker102.github.io/vipermesh-blender/)
 | [ViperMesh Studio waitlist](https://vipermesh-studio.vercel.app/waitlist)
+
+</div>
+
+---
 
 ViperMesh for Blender is a free, open-source addon that lets a compatible AI
 assistant work inside your Blender scene. It is for Blender artists, hobbyists
@@ -34,6 +49,22 @@ AI tokens are the units of text a model reads and writes. Generating less code
 can reduce AI usage, but total tokens, cost and time also depend on your model
 and the task. Scene checks help with correctness; they do not guarantee a
 beautiful or error-free result.
+
+## One Reference, Two Blender Workflows
+
+<p align="center">
+<a href="site/assets/scandinavian-entryway-comparison.png"><img src="site/assets/scandinavian-entryway-comparison.png" alt="Historical scene comparison: reference image on the left, ViperMesh MCP Blender viewport in the centre, and original BlenderMCP viewport on the right" width="960"></a>
+</p>
+
+One historical image-reconstruction test using the ViperMesh Blender MCP
+harness and available assets. Only the centre heading was relabelled; the
+reference and both scene screenshots are unchanged. This is one example,
+not a guarantee of every result. The public addon does not bundle private
+Studio asset libraries.
+
+[Read the Blender MCP case study, Part One](https://kristoferjussmann.me/case-studies/vipermesh/)
+| [Open the full-size comparison](site/assets/scandinavian-entryway-comparison.png)
+| [Image integrity record](site/assets/scandinavian-entryway-comparison.provenance.json)
 
 ## What Can It Help With?
 
@@ -206,7 +237,9 @@ reporting process.
 This repository contains the open-source Blender addon, portable MCP server,
 portable public tool skills, and connector tests. It does not include the
 ViperMesh application, authentication, billing, private prompts, private RAG
-data, cloud model routing, private assets, or benchmark evidence.
+data, cloud model routing, private assets, raw benchmark traces, or private
+evaluation datasets. The illustrated comparison is separately provided public
+evidence, not a bundled asset library.
 
 The connector does not bundle a commercial 3D generation provider. Neural
 generation can be added later through provider-neutral authenticated services
@@ -223,9 +256,10 @@ not include free AI model access.
 ### Do I need to be a programmer?
 
 You do not need to write Python for the covered Blender edits. The initial
-setup still involves installing the addon, building the connection and
-configuring your AI app. We provide the commands and client-specific setup
-instructions; it is not yet a one-click install.
+setup still involves installing the addon and connecting a compatible AI app.
+Use the MCPB bundle in clients that support it, or build from source using the
+provided commands. The separately enabled Blender bridge and client setup mean
+this is not a one-click install for every environment.
 
 ### Does ViperMesh replace `execute_code`?
 

@@ -1,0 +1,22 @@
+{
+  "sourceFile": "nomedadatacomparison.jpeg",
+  "sourceSha256": "9de23d11ad9b8089774274eb25aefe48c1029371b32a204bee8b5e76599e0a86",
+  "generatedHeaderSha256": "02cb8b3d91ff43e5c25d42d61800dcb62e95610ea739eaf59653fd698a54c02f",
+  "outputSha256": "5a1b47c09c5dcc17e29022a988e76f8f906fd6871645f991766c2804d778abc5",
+  "dimensions": {
+    "width": 1376,
+    "height": 768
+  },
+  "allowedEditRegion": {
+    "left": 459,
+    "top": 0,
+    "width": 459,
+    "height": 67
+  },
+  "edit": "Only the centre heading is replaced with ViperMesh MCP; no scene pixels are generated.",
+  "changedHeaderPixels": 30748,
+  "changedPixelsOutsideAllowedRegion": 0,
+  "changedScenePixels": 0,
+  "originalScenePixelsSha256": "f4a75b7a5f8fbf0cf95620cfd811aea1b5ff66690c85565e38af6fa0f517132d",
+  "outputScenePixelsSha256": "f4a75b7a5f8fbf0cf95620cfd811aea1b5ff66690c85565e38af6fa0f517132d"
+}

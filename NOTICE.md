@@ -16,6 +16,6 @@ independent open-source connector.
 
 The project overview site includes the Outfit font, distributed under the SIL
 Open Font License 1.1. Its license is included at `site/assets/OFL-Outfit.txt`.
-The site's icon sprite is generated from Lucide icons under the ISC license;
+The site's icon sprite and README action icons use Lucide under the ISC license;
 the associated license is included at `site/assets/LICENSE-Lucide.txt`.
 ViperMesh artwork is branding, not a Blender screenshot or a benchmark artifact.
