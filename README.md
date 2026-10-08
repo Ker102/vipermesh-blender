@@ -14,7 +14,7 @@
 Designed for faster scene edits, fewer AI tokens and better-checked results.
 
 <p>
-<a href="https://github.com/Ker102/vipermesh-blender/releases/latest"><img src="site/assets/readme-download.svg" alt="Download Blender addon" width="220" height="44"></a>
+<a href="https://github.com/Ker102/vipermesh-blender/releases/latest"><img src="site/assets/readme-download.svg" alt="Download Blender addon" width="240" height="44"></a>
 <a href="docs/client-setup.md"><img src="site/assets/readme-setup.svg" alt="Setup guide" width="160" height="44"></a>
 </p>
 
