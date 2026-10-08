@@ -5,58 +5,78 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![MCP](https://img.shields.io/badge/Model_Context_Protocol-server-1f6feb)](https://modelcontextprotocol.io/)
 
-**A persistent Model Context Protocol server and deterministic Blender addon
-for AI agents.**
+**AI assistance for Blender, with less code and less waiting.**
 
 [Project overview and setup](https://ker102.github.io/vipermesh-blender/)
 | [ViperMesh Studio waitlist](https://vipermesh-studio.vercel.app/waitlist)
 
-ViperMesh for Blender gives MCP-compatible agents structured scene inspection,
-reusable Blender operations, bounded batches, local 3D workflow guidance, and
-an explicit Python fallback. It is designed to reduce repeated Blender API
-code without preventing genuinely custom geometry or scene work.
+ViperMesh for Blender is a free, open-source addon that lets a compatible AI
+assistant work inside your Blender scene. It is for Blender artists, hobbyists
+and game creators who want help making and editing 3D scenes, not another coding
+project.
+
+**The goal: faster AI-assisted work, fewer AI tokens and better-checked results.**
+Your assistant gets ready-to-use Blender actions instead of having to write new
+Python code for many common edits. You keep working in Blender and decide what
+you want the assistant to help with.
 
 ## Why ViperMesh for Blender?
 
-Many Blender agent integrations expose a small set of inspection calls plus
-arbitrary Python execution. ViperMesh keeps that escape hatch while adding a
-broad deterministic tool surface for common operations.
-
-| Capability | What it provides |
+| What matters to you | How ViperMesh helps |
 | --- | --- |
-| Persistent session | One MCP process and one serialized Blender connection per agent session |
-| Deterministic tools | Structured operations for assembly, materials, cameras, lighting, rendering, rigging, UVs, retopology, export, and inspection |
-| Scene validation | Grounding, support, clearance, spatial-relation, file-health, and render-artifact checks |
-| Compact workflows | Bounded batch calls plus separate build, inspect/repair, and finalize stages |
-| Agent onboarding | Session bootstrap, MCP resources, concise operating rules, and portable tool skills |
-| Custom fallback | `execute_code` remains available when a deterministic operation is not the right tool |
+| Less AI usage | Reusable actions reduce the Blender code the assistant needs to generate for covered tasks. |
+| Less waiting | The connection stays open, and related actions can run together instead of repeating setup for each step. |
+| Better-checked scenes | Built-in checks help identify floating objects, wrong orientations and clearance problems; the assistant can inspect images and repair mistakes. |
+| Easier for your assistant | Discoverable tools and concise guidance explain what actions are available and how to use them. |
+| Room for custom work | The assistant can still write Python when your request needs something the ready-made tools do not cover. |
 
-## Architecture
+AI tokens are the units of text a model reads and writes. Generating less code
+can reduce AI usage, but total tokens, cost and time also depend on your model
+and the task. Scene checks help with correctness; they do not guarantee a
+beautiful or error-free result.
 
-```text
-MCP-compatible agent
-        |
-        | stdio, one long-lived process
-        v
-ViperMesh MCP server
-        |
-        | serialized loopback connection
-        v
-ViperMesh Blender addon (127.0.0.1:9876)
-        |
-        v
-Blender scene
-```
+## What Can It Help With?
 
-The MCP server opens no network listener. The Blender addon listens on
-loopback by default and reports **Stopped**, **Ready**, **Agent connected**, or
-**Error** in the ViperMesh sidebar.
+- Build, move, duplicate and arrange objects in a scene.
+- Soften edges, adjust materials, set cameras and change lighting.
+- Check whether objects sit on their supports or leave enough space.
+- Assist with mesh cleanup, retopology, UV preparation, rigging and weights.
+- Work with animation settings, prepare exports and inspect results.
+
+For example, you could ask your assistant:
+
+> Move the basket under the right side of the table, without intersecting its legs.
+
+> Soften the sharp edges on this furniture, keeping its overall shape.
+
+> Check this scene for unsupported objects, then show me what needs fixing.
+
+These are examples of requests, not prebuilt scene templates. You do not need
+to write Blender Python yourself for the operations the tools cover.
+
+## How Is It Different From The Original BlenderMCP?
+
+ViperMesh builds on the original
+[BlenderMCP project by Siddharth Ahuja](https://github.com/ahujasid/mcp-for-blender),
+now named MCP for Blender. The main difference is its emphasis on a broad set
+of ready-made editing actions, reusable workflows and scene checks, rather than
+relying on newly generated Python for common edits.
+
+Both projects can inspect scenes and run custom Python. The original project
+also offers asset and generation integrations. ViperMesh's aim is to make
+everyday scene operations more token-efficient, faster, simpler for assistants
+to use and easier to validate. This is not a claim that it wins every task or
+that the public connector includes every feature of ViperMesh Studio.
 
 ## Requirements
 
 - Blender 5.2 for the currently tested release target
 - Node.js 20 or newer
 - An MCP-compatible client that supports stdio servers
+
+MCP, short for Model Context Protocol, is a connection standard that lets an AI
+assistant use tools in another application. You need an AI app that supports
+these connections; installing the addon alone does not add an AI model to Blender.
 
 ## Install
 
@@ -85,7 +105,7 @@ npm install
 npm run build
 ```
 
-### 3. Configure your MCP client
+### 3. Connect your AI assistant
 
 Use the built entry point from an absolute path:
 
@@ -107,7 +127,33 @@ Start this command once through the MCP client. Do not invoke `npm`, `npx`, or
 for Codex, JSON-configured clients, compatibility, and the optional Docker MCP
 Toolkit route.
 
-## First Agent Calls
+## Technical Details
+
+The sections below are for setting up or developing an AI connection. Blender
+users can start with the installation steps and the example requests above.
+
+### Connection Model
+
+```text
+MCP-compatible AI assistant
+        |
+        | stdio, one long-lived process
+        v
+ViperMesh MCP server
+        |
+        | serialized loopback connection
+        v
+ViperMesh Blender addon (127.0.0.1:9876)
+        |
+        v
+Blender scene
+```
+
+The MCP server opens no network listener. The Blender addon listens on
+loopback by default and reports **Stopped**, **Ready**, **Agent connected**, or
+**Error** in the ViperMesh sidebar.
+
+### First Agent Calls
 
 1. Call `bootstrap_vipermesh_session`.
 2. Inspect the scene with `call_blender_tool(name="get_scene_info")`.
@@ -154,6 +200,19 @@ without embedding third-party credentials in Blender.
 
 ## Frequently Asked Questions
 
+### Do I need a paid ViperMesh account?
+
+No. The public addon and local connection are free to use without a ViperMesh
+account. Your AI app or model provider may charge separately. The addon does
+not include free AI model access.
+
+### Do I need to be a programmer?
+
+You do not need to write Python for the covered Blender edits. The initial
+setup still involves installing the addon, building the connection and
+configuring your AI app. We provide the commands and client-specific setup
+instructions; it is not yet a one-click install.
+
 ### Does ViperMesh replace `execute_code`?
 
 No. It reduces unnecessary generated Blender Python by providing structured
@@ -197,6 +256,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
 ## License and Attribution
 
 ViperMesh for Blender is released under the [MIT License](LICENSE). It includes
-work derived from [BlenderMCP](https://github.com/ahujasid/blender-mcp) by
+work derived from [BlenderMCP](https://github.com/ahujasid/mcp-for-blender) by
 Siddharth Ahuja. See [NOTICE.md](NOTICE.md) for attribution and trademark
 notices.

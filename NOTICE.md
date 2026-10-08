@@ -1,7 +1,7 @@
 # Attribution
 
 ViperMesh for Blender includes work derived from
-[BlenderMCP](https://github.com/ahujasid/blender-mcp) by Siddharth Ahuja,
+[BlenderMCP](https://github.com/ahujasid/mcp-for-blender) by Siddharth Ahuja,
 originally distributed under the MIT License.
 
 The ViperMesh contributors extended that foundation with a persistent MCP

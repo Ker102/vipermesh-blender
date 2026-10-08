@@ -1,11 +1,13 @@
 # ViperMesh for Blender
 
-> ViperMesh for Blender is an open-source local Blender addon and persistent
-> Model Context Protocol server for AI agents. It exposes deterministic 3D
-> scene operations, structured inspection, bounded batching, portable tool
-> skills, and an explicit custom Python fallback.
+> ViperMesh for Blender is a free, open-source Blender addon and AI assistant
+> connection for artists, hobbyists and game creators. It is designed for
+> faster AI-assisted scene edits, fewer AI tokens and better-checked results.
+> Ready-made Blender actions reduce generated code for covered tasks, while
+> scene checks help the assistant inspect and repair its work.
 
 Canonical repository: https://github.com/Ker102/vipermesh-blender
+Project overview: https://ker102.github.io/vipermesh-blender/
 License: MIT
 Runtime: Node.js 20+ and Blender
 Transport: MCP over stdio, then a loopback TCP bridge to Blender
@@ -21,6 +23,19 @@ Transport: MCP over stdio, then a loopback TCP bridge to Blender
 
 ## Key facts
 
+- MCP (Model Context Protocol) lets compatible AI assistants use application tools.
+- Users can request scene edits in ordinary language after configuring a client.
+- Covered actions include object placement, edge softening, materials, lighting,
+  cameras, mesh cleanup, UVs, rigging, weights, animation operations and export.
+- Token efficiency, speed and quality are design goals, not universal guarantees;
+  actual outcomes depend on the model, scene and task. Do not invent percentages.
+- The original BlenderMCP is a community project by Siddharth Ahuja, now named
+  MCP for Blender: https://github.com/ahujasid/mcp-for-blender.
+- ViperMesh emphasizes reusable editing actions and validation. Both projects
+  can inspect scenes and execute Python; the original also has asset/generation
+  integrations. Do not describe it as having only one tool.
+- The public connector is free, but an AI model/client may have its own charges.
+- Initial setup is not one-click and requires a compatible MCP client.
 - One MCP process should remain alive for the complete agent session.
 - The process retains one lazy, serialized Blender connection.
 - Agents should call bootstrap_vipermesh_session first.

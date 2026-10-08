@@ -2,15 +2,17 @@ cff-version: 1.2.0
 message: "If you use ViperMesh for Blender, cite the software repository."
 title: "ViperMesh for Blender"
 type: software
-version: 1.2.0
-date-released: 2026-07-25
+version: 1.3.0
+date-released: 2026-10-07
 license: MIT
 repository-code: "https://github.com/Ker102/vipermesh-blender"
-url: "https://github.com/Ker102/vipermesh-blender"
-abstract: "A persistent Model Context Protocol server and deterministic Blender addon for AI agents."
+url: "https://ker102.github.io/vipermesh-blender/"
+abstract: "Free, open-source AI assistance for Blender artists, hobbyists and game creators, designed for faster scene editing, fewer AI tokens and better-checked results."
 keywords:
   - Blender
   - Model Context Protocol
   - MCP
   - 3D automation
   - AI agents
+  - Blender addon
+  - AI-assisted 3D modeling

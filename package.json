@@ -1,7 +1,7 @@
 {
   "name": "vipermesh-blender-mcp",
   "version": "1.3.0",
-  "description": "Persistent Model Context Protocol server and deterministic Blender addon for AI agents",
+  "description": "Free Blender MCP addon for AI-assisted scene editing, designed for fewer AI tokens, faster work and better-checked results",
   "license": "MIT",
   "private": false,
   "type": "module",
@@ -21,6 +21,10 @@
     "3d",
     "ai-agent",
     "blender-addon",
+    "blender-ai",
+    "3d-modeling",
+    "scene-editing",
+    "game-development",
     "automation"
   ],
   "bin": {
