@@ -96,7 +96,20 @@ Keep the bridge running for the complete agent session.
 
 ### 2. Install the MCP server
 
-Until the npm package is published, clone the repository and install it:
+**Packaged option:** Download the
+[`v1.3.0` MCPB bundle](https://github.com/Ker102/vipermesh-blender/releases/download/v1.3.0/vipermesh-blender-1.3.0.mcpb)
+and import it into a client that supports local MCPB extensions. It contains
+the Node server and its dependencies, so you do not need to clone or build the
+repository. Node.js and the separately enabled Blender addon are still required.
+
+The connector is also listed on
+[Smithery](https://smithery.ai/servers/ker102/vipermesh-blender) and in the
+[official MCP Registry](https://registry.modelcontextprotocol.io/v0.1/servers?search=io.github.Ker102/vipermesh-blender).
+These listings distribute the local connector, not a hosted Blender service.
+See [distribution and bundle setup](docs/mcp-distribution.md) for the checksum,
+manual extraction option, and current validation limits.
+
+**Source option:** Until the npm package is published, clone and build it:
 
 ```bash
 git clone https://github.com/Ker102/vipermesh-blender.git
@@ -107,7 +120,8 @@ npm run build
 
 ### 3. Connect your AI assistant
 
-Use the built entry point from an absolute path:
+When using the MCPB import, the client reads its launch configuration from the
+bundle. For the source option, use the built entry point from an absolute path:
 
 ```json
 {

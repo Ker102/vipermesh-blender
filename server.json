@@ -1,0 +1,30 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.Ker102/vipermesh-blender",
+  "title": "ViperMesh for Blender",
+  "description": "Free Blender MCP addon for faster AI scene edits, fewer tokens and built-in scene checks.",
+  "version": "1.3.0",
+  "repository": {
+    "url": "https://github.com/Ker102/vipermesh-blender",
+    "source": "github"
+  },
+  "websiteUrl": "https://ker102.github.io/vipermesh-blender/",
+  "packages": [
+    {
+      "registryType": "mcpb",
+      "identifier": "https://github.com/Ker102/vipermesh-blender/releases/download/v1.3.0/vipermesh-blender-1.3.0.mcpb",
+      "fileSha256": "45f8cee90540e9f906b8e817efb6fa0a1302f8dba515522dc3682d328a90206c",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ],
+  "_meta": {
+    "io.modelcontextprotocol.registry/publisher-provided": {
+      "fullDescription": "Free, open-source Blender MCP addon for artists, hobbyists and game creators. Designed for faster AI-assisted edits, fewer AI tokens and better-checked results.",
+      "audience": ["Blender artists", "hobbyists", "game creators"],
+      "requirements": "Local Blender, manually installed addon, Node.js, and a stdio-compatible MCP client.",
+      "sourceCommit": "781700be4f0fb32b135d3f5cb7da012ce8fc4abd"
+    }
+  }
+}
