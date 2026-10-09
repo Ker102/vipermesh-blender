@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="site/assets/readme-mark.svg" alt="" width="56" height="56">
+<a href="https://ker102.github.io/vipermesh-blender/"><img src="site/assets/brand-mark.png" alt="ViperMesh logo" width="104" height="104"></a>
 
 <h1>ViperMesh for Blender</h1>
 
