@@ -18,7 +18,7 @@
   <meta property="og:image:alt" content="ViperMesh Blender MCP tools and local AI connection">
   <link rel="alternate" type="text/markdown" href="index.md" title="ViperMesh overview for agents">
   <link rel="describedby" type="text/plain" href="llms.txt">
-  <link rel="icon" href="assets/brand-mark.png">
+  <link rel="icon" href="assets/brand-mark-256.webp">
   <link rel="preload" href="assets/outfit-variable.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="stylesheet" href="styles.css?v=20261010-video">
   <script src="site.js?v=20261008" defer></script>
@@ -27,7 +27,7 @@
 <body>
   <a class="skip" href="#main">Skip to content</a>
   <header class="site-header wrap">
-    <a class="brand" href="./"><img src="assets/brand-mark.png" alt="" width="34" height="34"><span>ViperMesh <small>for Blender</small></span></a>
+    <a class="brand" href="./"><img src="assets/brand-mark-256.webp" alt="" width="34" height="34"><span>ViperMesh <small>for Blender</small></span></a>
     <nav aria-label="Main navigation">
       <a href="#tools">Tools</a><a href="#overview">Overview</a><a href="#setup">Setup</a>
       <a href="https://github.com/Ker102/vipermesh-blender" class="repo-link" aria-label="GitHub repository"><svg class="icon " aria-hidden="true"><use href="assets/icons.svg#Github"></use></svg> <span>GitHub</span><svg class="icon " aria-hidden="true"><use href="assets/icons.svg#ArrowUpRight"></use></svg></a>
@@ -47,7 +47,7 @@
       </div>
       <figure class="session-figure">
         <div class="session-composition">
-          <div class="viper viper-back" aria-hidden="true"><img src="assets/viper-wrap.png" alt="" width="4232" height="2362" fetchpriority="high"></div>
+          <div class="viper viper-back" aria-hidden="true"><img src="assets/viper-wrap-1024.webp" srcset="assets/viper-wrap-640.webp 640w, assets/viper-wrap-1024.webp 1024w, assets/viper-wrap-1800.webp 1800w" sizes="(max-width:600px) 140vw, (max-width:900px) 110vw, 1100px" alt="" width="4232" height="2362" fetchpriority="high"></div>
           <div class="session-panel">
             <div class="session-title"><svg class="icon " aria-hidden="true"><use href="assets/icons.svg#Terminal"></use></svg> <span>Example MCP session</span><small>stdio <span aria-hidden="true">/</span> loopback</small></div>
             <ol class="session-commands">
@@ -56,7 +56,7 @@
               <li><span class="step">03</span><code>run_blender_scene_stage</code><span class="command-purpose">Build &amp; review</span></li>
             </ol>
           </div>
-          <div class="viper viper-front" aria-hidden="true"><img src="assets/viper-wrap.png" alt="" width="4232" height="2362"></div>
+          <div class="viper viper-front" aria-hidden="true"><img src="assets/viper-wrap-1024.webp" srcset="assets/viper-wrap-640.webp 640w, assets/viper-wrap-1024.webp 1024w, assets/viper-wrap-1800.webp 1800w" sizes="(max-width:600px) 140vw, (max-width:900px) 110vw, 1100px" alt="" width="4232" height="2362"></div>
         </div>
         <figcaption>Less generated code. Your scene stays in Blender.</figcaption>
       </figure>
@@ -74,7 +74,7 @@
       <div class="wrap">
         <div class="section-heading"><p class="eyebrow">A 72-second introduction</p><h2 id="overview-title">How the connection works.</h2><p>Your request, ready-made Blender actions, and a result you can inspect.</p></div>
         <figure class="connector-video">
-          <video controls playsinline preload="none" poster="assets/connector-overview-poster.png" width="1920" height="1080" aria-label="ViperMesh for Blender illustrated overview" aria-describedby="overview-caption">
+          <video controls playsinline preload="none" poster="assets/connector-overview-poster.webp" width="1920" height="1080" aria-label="ViperMesh for Blender illustrated overview" aria-describedby="overview-caption">
             <source src="assets/connector-overview.mp4" type="video/mp4">
             <a href="assets/connector-overview.mp4">Watch or download the ViperMesh overview</a>.
           </video>
@@ -88,7 +88,7 @@
       <div class="wrap">
         <div class="section-heading"><p class="eyebrow">A real Blender scene comparison</p><h2 id="comparison-title">One reference.<br>Two Blender workflows.</h2><p>Reference image, ViperMesh MCP, and the original BlenderMCP baseline.</p></div>
         <figure class="scene-comparison">
-          <a href="assets/scandinavian-entryway-comparison.png" target="_blank" rel="noopener noreferrer" aria-label="Open the full-size Blender scene comparison"><img src="assets/scandinavian-entryway-comparison.png" alt="Historical comparison showing the reference room on the left, ViperMesh MCP's Blender viewport in the centre, and the original BlenderMCP viewport on the right" width="1376" height="768" loading="lazy" decoding="async"></a>
+          <a href="assets/scandinavian-entryway-comparison.png" target="_blank" rel="noopener noreferrer" aria-label="Open the full-size Blender scene comparison"><img src="assets/scene-comparison-1376.webp" srcset="assets/scene-comparison-688.webp 688w, assets/scene-comparison-1376.webp 1376w" sizes="(max-width:600px) calc(100vw - 40px), (max-width:1100px) calc(100vw - 56px), 1040px" alt="Historical comparison showing the reference room on the left, ViperMesh MCP's Blender viewport in the centre, and the original BlenderMCP viewport on the right" width="1376" height="768" loading="lazy" decoding="async"></a>
           <figcaption>From a historical scene-reconstruction test. Only the centre heading was relabelled; the reference and scene pixels are unchanged. One example, not a universal quality claim.</figcaption>
         </figure>
         <div class="comparison-context"><p>The benchmark used its own guidance and available assets. The public addon does not bundle private Studio asset libraries.</p><a class="text-link" href="https://kristoferjussmann.me/case-studies/vipermesh/">Read the case study, Part One <svg class="icon " aria-hidden="true"><use href="assets/icons.svg#ArrowUpRight"></use></svg></a><a class="text-link" href="assets/scandinavian-entryway-comparison.png" target="_blank" rel="noopener noreferrer">Full-size comparison <svg class="icon " aria-hidden="true"><use href="assets/icons.svg#ArrowUpRight"></use></svg></a></div>
@@ -148,6 +148,6 @@ npm run build</code></pre></div>
       <div class="wrap"><div><p class="eyebrow">Build it with us</p><h2>Start with your scene.</h2><p>Try a useful edit. Inspect the result.<br>Tell us what works and what needs a better tool.</p></div><a class="button primary" href="https://github.com/Ker102/vipermesh-blender/issues">Share feedback <svg class="icon " aria-hidden="true"><use href="assets/icons.svg#ArrowUpRight"></use></svg></a></div>
     </section>
   </main>
-  <footer class="wrap"><a class="brand footer-brand" href="./"><img src="assets/brand-mark.png" alt="" width="28" height="28"><span>ViperMesh <small>for Blender</small></span></a><p>Open source. Built around Blender.</p><nav aria-label="Footer"><a href="https://github.com/Ker102/vipermesh-blender/blob/main/NOTICE.md">Attribution</a><a href="https://github.com/Ker102/vipermesh-blender/blob/main/SECURITY.md">Security</a><a href="https://vipermesh-studio.vercel.app/waitlist">Studio waitlist <svg class="icon " aria-hidden="true"><use href="assets/icons.svg#ArrowUpRight"></use></svg></a></nav></footer>
+  <footer class="wrap"><a class="brand footer-brand" href="./"><img src="assets/brand-mark-256.webp" alt="" width="28" height="28"><span>ViperMesh <small>for Blender</small></span></a><p>Open source. Built around Blender.</p><nav aria-label="Footer"><a href="https://github.com/Ker102/vipermesh-blender/blob/main/NOTICE.md">Attribution</a><a href="https://github.com/Ker102/vipermesh-blender/blob/main/SECURITY.md">Security</a><a href="https://vipermesh-studio.vercel.app/waitlist">Studio waitlist <svg class="icon " aria-hidden="true"><use href="assets/icons.svg#ArrowUpRight"></use></svg></a></nav></footer>
 </body>
 </html>

@@ -1,5 +1,5 @@
 @font-face { font-family:Outfit; src:url("assets/outfit-variable.ttf") format("truetype"); font-weight:100 900; font-style:normal; font-display:swap; }
-:root { color-scheme:light; --paper:#fbfcfa; --ink:#15302d; --muted:#62736c; --accent:#087d67; --line:#dbe5de; }
+:root { color-scheme:light; --paper:#fbfcfa; --ink:#15302d; --muted:#5b6b64; --accent:#087d67; --line:#dbe5de; }
 * { box-sizing:border-box; letter-spacing:0; }
 html { scroll-behavior:smooth; scroll-padding-top:92px; }
 body { margin:0; background:var(--paper); color:var(--ink); font:16px/1.6 Outfit,system-ui,sans-serif; }
