@@ -3,6 +3,7 @@
 <a href="https://ker102.github.io/vipermesh-blender/"><img src="site/assets/brand-mark.png" alt="ViperMesh logo" width="104" height="104"></a>
 
 <h1>ViperMesh for Blender</h1>
+<p>Open-source Blender MCP server and addon for AI agents.</p>
 
 [![CI](https://github.com/Ker102/vipermesh-blender/actions/workflows/ci.yml/badge.svg)](https://github.com/Ker102/vipermesh-blender/actions/workflows/ci.yml)
 [![GitHub release](https://img.shields.io/github/v/release/Ker102/vipermesh-blender?display_name=tag)](https://github.com/Ker102/vipermesh-blender/releases)
@@ -25,7 +26,7 @@ Designed for faster scene edits, fewer AI tokens and better-checked results.
 
 ---
 
-ViperMesh for Blender is a free, open-source addon that lets a compatible AI
+ViperMesh for Blender is a free, open-source **Blender MCP server and addon** that lets a compatible AI
 assistant work inside your Blender scene. It is for Blender artists, hobbyists
 and game creators who want help making and editing 3D scenes, not another coding
 project.
@@ -108,6 +109,8 @@ also offers asset and generation integrations. ViperMesh's aim is to make
 everyday scene operations more token-efficient, faster, simpler for assistants
 to use and easier to validate. This is not a claim that it wins every task or
 that the public connector includes every feature of ViperMesh Studio.
+
+[Website installation guide](https://ker102.github.io/vipermesh-blender/setup/) · [Harness Library listing](https://kaelux-labs.github.io/harness-library/harnesses/vipermesh-blender/)
 
 ## Requirements
 

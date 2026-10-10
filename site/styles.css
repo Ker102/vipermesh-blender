@@ -213,3 +213,19 @@ footer nav .icon { width:14px; height:14px; flex-basis:14px; }
   .session-figure figcaption { margin-top:18px; }
 }
 @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } *, *::before, *::after { transition:none !important; } }
+
+.discovery-guide { padding-block: 48px; max-width: 900px; }
+.discovery-guide p { line-height: 1.8; }
+.setup-guide { max-width: 880px; padding-block: 40px 64px; }
+.setup-guide h1 { font-size: clamp(36px, 5vw, 60px); margin-block: 28px 20px; }
+.setup-guide .guide-lead { font-size: 20px; line-height: 1.6; }
+.setup-guide section { margin-top: 42px; }
+.setup-guide h2 { font-size: 26px; margin-bottom: 16px; }
+.setup-guide h3 { margin-top: 24px; }
+.setup-guide p, .setup-guide li { line-height: 1.8; }
+.setup-guide li { margin-bottom: 8px; }
+.setup-guide pre { padding: 22px; border: 1px solid var(--line); border-radius: 12px; background: #f5f7f4; overflow-wrap: anywhere; white-space: pre-wrap; font-size: 13px; line-height: 1.8; }
+.setup-guide details { padding-block: 18px; border-bottom: 1px solid var(--line); }
+.setup-guide summary { cursor: pointer; font-weight: 600; }
+.setup-guide details p { margin-bottom: 0; }
+@media (max-width:600px) { .setup-guide { padding-top: 24px; } .setup-guide .guide-lead { font-size: 17px; } .setup-guide h2 { font-size: 23px; } }
