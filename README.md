@@ -1,5 +1,9 @@
 <div align="center">
 
+<!-- i18n:languages:start -->
+[English](README.md) | [Español](docs/i18n/es/README.md) | [简体中文](docs/i18n/zh-CN/README.md) | [Français](docs/i18n/fr/README.md) | [日本語](docs/i18n/ja/README.md) | [Deutsch](docs/i18n/de/README.md) | [Português (Brasil)](docs/i18n/pt-BR/README.md)
+<!-- i18n:languages:end -->
+
 <a href="https://ker102.github.io/vipermesh-blender/"><img src="site/assets/brand-mark.png" alt="ViperMesh logo" width="104" height="104"></a>
 
 <h1>ViperMesh for Blender</h1>

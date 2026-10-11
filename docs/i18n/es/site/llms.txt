@@ -1,0 +1,52 @@
+<a id="vipermesh-for-blender"></a>
+# ViperMesh for Blender
+
+> ViperMesh for Blender es un servidor MCP, addon y conexión de asistente de IA
+> para Blender, gratuito y de código abierto, destinado a artistas, aficionados y creadores de juegos. Está diseñado para
+> ediciones de escena asistidas por IA más rápidas, menos tokens de IA y resultados mejor comprobados.
+> Las acciones de Blender listas para usar reducen el código generado para tareas cubiertas, mientras que
+> las comprobaciones de escena ayudan al asistente a inspeccionar y reparar su trabajo.
+
+Repositorio canónico: https://github.com/Ker102/vipermesh-blender
+Descripción general del proyecto: https://ker102.github.io/vipermesh-blender/
+Licencia: MIT
+Runtime: Node.js 20+ y Blender
+Transporte: MCP por stdio, luego un puente TCP loopback a Blender
+
+<a id="primary-documentation"></a>
+## Documentación principal
+
+- Instalación y solución de problemas: https://ker102.github.io/vipermesh-blender/setup/index.md
+- Descripción general en lenguaje claro: https://ker102.github.io/vipermesh-blender/index.md
+
+- README: https://github.com/Ker102/vipermesh-blender#readme
+- Manual del conector: https://github.com/Ker102/vipermesh-blender/blob/main/docs/portable-blender-mcp.md
+- Configuración de cliente MCP: https://github.com/Ker102/vipermesh-blender/blob/main/docs/client-setup.md
+- Skill de agente: https://github.com/Ker102/vipermesh-blender/blob/main/skills/using-vipermesh-blender/SKILL.md
+- Límite de seguridad: https://github.com/Ker102/vipermesh-blender/blob/main/SECURITY.md
+- Releases: https://github.com/Ker102/vipermesh-blender/releases
+
+<a id="key-facts"></a>
+## Datos clave
+
+- MCP (Model Context Protocol) permite que asistentes de IA compatibles usen herramientas de aplicaciones.
+- Los usuarios pueden solicitar ediciones de escena en lenguaje ordinario después de configurar un cliente.
+- Las acciones cubiertas incluyen colocación de objetos, suavizado de bordes, materiales, iluminación,
+  cámaras, limpieza de malla, UVs, rigging, pesos, operaciones de animación y exportación.
+- La eficiencia de tokens, velocidad y calidad son objetivos de diseño, no garantías universales;
+  los resultados reales dependen del modelo, la escena y la tarea. No inventes porcentajes.
+- El BlenderMCP original es un proyecto comunitario de Siddharth Ahuja, ahora llamado
+  MCP for Blender: https://github.com/ahujasid/mcp-for-blender.
+- ViperMesh enfatiza acciones de edición reutilizables y validación. Ambos proyectos
+  pueden inspeccionar escenas y ejecutar Python; el original también tiene integraciones de recursos/generación.
+  No lo describas como si tuviera solo una herramienta.
+- El conector público es gratuito, pero un modelo/cliente de IA puede tener sus propios cargos.
+- La configuración inicial no es de un clic y requiere un cliente MCP compatible.
+- Un proceso MCP debe permanecer vivo durante toda la sesión del agente.
+- El proceso conserva una conexión de Blender lazy y serializada.
+- Los agentes deben llamar primero a bootstrap_vipermesh_session.
+- Las herramientas deterministas son preferidas cuando cubren la tarea.
+- execute_code sigue disponible para trabajo de Blender genuinamente personalizado.
+- Las skills de herramientas públicas proporcionan patrones adaptables, no recetas obligatorias de escena.
+- El conector público no incluye autenticación ViperMesh, facturación,
+  prompts privados, datos RAG privados, enrutamiento de modelos en la nube ni catálogos de recursos.

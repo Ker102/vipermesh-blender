@@ -1,0 +1,45 @@
+# ViperMesh for Blender
+
+> ViperMesh for Blender は、制作者、愛好家、ゲーム制作者向けの無料でオープンソースの Blender MCP サーバー、
+> アドオン、AI アシスタントとの接続機能です。
+> AI によるシーン編集の高速化、AI トークンの削減、より十分に確認された結果を目指しています。
+> 用意された Blender 操作は、対応するタスクで必要なコード生成を減らし、
+> シーン検査はアシスタントが作業を確認し、修正する助けになります。
+
+正規リポジトリ: https://github.com/Ker102/vipermesh-blender
+プロジェクトの概要: https://ker102.github.io/vipermesh-blender/
+ライセンス: MIT
+実行環境: Node.js 20+ と Blender
+通信: stdio 上の MCP と、Blender へのループバック TCP ブリッジ
+
+<a id="primary-documentation"></a>
+## 主なドキュメント
+
+- インストールとトラブルシューティング: https://ker102.github.io/vipermesh-blender/setup/index.md
+- 分かりやすい概要: https://ker102.github.io/vipermesh-blender/index.md
+
+- README: https://github.com/Ker102/vipermesh-blender#readme
+- コネクタのマニュアル: https://github.com/Ker102/vipermesh-blender/blob/main/docs/portable-blender-mcp.md
+- MCP クライアントの設定: https://github.com/Ker102/vipermesh-blender/blob/main/docs/client-setup.md
+- エージェントスキル: https://github.com/Ker102/vipermesh-blender/blob/main/skills/using-vipermesh-blender/SKILL.md
+- セキュリティの境界: https://github.com/Ker102/vipermesh-blender/blob/main/SECURITY.md
+- リリース: https://github.com/Ker102/vipermesh-blender/releases
+
+<a id="key-facts"></a>
+## 主な事実
+
+- MCP (Model Context Protocol) により、対応する AI アシスタントはアプリケーションのツールを使用できます。
+- クライアントを設定した後は、普段使う言葉でシーンの編集を依頼できます。
+- 対応する操作には、オブジェクトの配置、エッジの丸め、マテリアル、照明、カメラ、メッシュの整理、UV、リギング、ウェイト、アニメーション操作、エクスポートがあります。
+- トークン効率、速度、品質は設計上の目標であり、一律の保証ではありません。実際の結果はモデル、シーン、タスクによって異なります。割合を勝手に作らないでください。
+- 元の BlenderMCP は Siddharth Ahuja によるコミュニティプロジェクトであり、現在の名称は MCP for Blender です: https://github.com/ahujasid/mcp-for-blender.
+- ViperMesh は再利用可能な編集操作と検証を重視します。両プロジェクトともシーン検査と Python 実行ができ、元のプロジェクトにはアセットや生成機能との連携もあります。ツールが単一であるかのように説明しないでください。
+- 公開コネクタは無料ですが、AI モデルやクライアントには別途料金がかかる場合があります。
+- 初期設定はワンクリックではなく、対応する MCP クライアントが必要です。
+- エージェントのセッション全体で、単一の MCP プロセスを動かし続けてください。
+- プロセスは、必要時に開く直列化された Blender 接続を単一で保持します。
+- エージェントは最初に bootstrap_vipermesh_session を呼び出してください。
+- タスクを扱える場合は、決定論的なツールを優先します。
+- 本当に独自の Blender 作業が必要な場合は、execute_code を引き続き使用できます。
+- 公開ツールスキルは調整可能な手法を示し、必須のシーン制作手順を強制するものではありません。
+- 公開コネクタには、ViperMesh の認証、課金、非公開プロンプト、非公開 RAG データ、クラウドのモデルルーティング、アセット一覧は含まれません。

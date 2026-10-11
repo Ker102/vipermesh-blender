@@ -1,0 +1,575 @@
+{
+  "schemaVersion": 1,
+  "sourceLocale": "en",
+  "repository": "https://github.com/Ker102/vipermesh-blender",
+  "baseCommit": "fcdd0902813abb9dbb1f3e5aa394d72f2159f115",
+  "sourceHashAlgorithm": "sha256-utf8-lf",
+  "mirrorPattern": "docs/i18n/<locale>/<repo-relative-source>",
+  "locales": [
+    "es",
+    "zh-CN",
+    "fr",
+    "ja",
+    "de",
+    "pt-BR"
+  ],
+  "coverage": {
+    "es": {
+      "status": "complete",
+      "completedSourceCount": 21,
+      "expectedSourceCount": 21
+    },
+    "zh-CN": {
+      "status": "complete",
+      "completedSourceCount": 21,
+      "expectedSourceCount": 21
+    },
+    "fr": {
+      "status": "complete",
+      "completedSourceCount": 21,
+      "expectedSourceCount": 21
+    },
+    "ja": {
+      "status": "complete",
+      "completedSourceCount": 21,
+      "expectedSourceCount": 21
+    },
+    "de": {
+      "status": "complete",
+      "completedSourceCount": 21,
+      "expectedSourceCount": 21
+    },
+    "pt-BR": {
+      "status": "complete",
+      "completedSourceCount": 21,
+      "expectedSourceCount": 21
+    }
+  },
+  "sources": [
+    {
+      "path": "README.md",
+      "sha256": "4b075923b439c7772061ebcd3f651c1363842d78f9adbc4c8dc0514579c09ada",
+      "completedLocales": [
+        "es",
+        "zh-CN",
+        "fr",
+        "ja",
+        "de",
+        "pt-BR"
+      ]
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "sha256": "ff0de9afaadae6a534c64fdc8486a8c26908b7d5793e12cab6d8400c423f83f3",
+      "completedLocales": [
+        "es",
+        "zh-CN",
+        "fr",
+        "ja",
+        "de",
+        "pt-BR"
+      ]
+    },
+    {
+      "path": "SECURITY.md",
+      "sha256": "c2efee36ff44bba2e3edd31f6145717c540c5039485f23d4d6ae291ed3158ac7",
+      "completedLocales": [
+        "es",
+        "zh-CN",
+        "fr",
+        "ja",
+        "de",
+        "pt-BR"
+      ]
+    },
+    {
+      "path": "CODE_OF_CONDUCT.md",
+      "sha256": "ffb32cbe2c72daf399bd71e5a65515438a9876d83cf6d9162356d8e94cce2371",
+      "completedLocales": [
+        "es",
+        "zh-CN",
+        "fr",
+        "ja",
+        "de",
+        "pt-BR"
+      ]
+    },
+    {
+      "path": "NOTICE.md",
+      "sha256": "9fbe3831dde48c5a3eeb9a518ed1c8c4901bf264f6ce46b4d841bba6cd92d8ac",
+      "completedLocales": [
+        "es",
+        "zh-CN",
+        "fr",
+        "ja",
+        "de",
+        "pt-BR"
+      ]
+    },
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "fd498ca323359356a0b1db7dcf5e08f5b073f40bb49986e64e874bc1e2bc2e33",
+      "completedLocales": [
+        "es",
+        "zh-CN",
+        "fr",
+        "ja",
+        "de",
+        "pt-BR"
+      ]
+    },
+    {
+      "path": "docs/client-setup.md",
+      "sha256": "c45a41e3872caa4db6a28d1e327feae989abef39462ffa9ede2005dc6646e84a",
+      "completedLocales": [
+        "es",
+        "zh-CN",
+        "fr",
+        "ja",
+        "de",
+        "pt-BR"
+      ]
+    },
+    {
+      "path": "docs/mcp-distribution.md",
+      "sha256": "dbb17a0bc4015f301854dc2ecf3cd587b2b867a5e65b2e0c671bc468c4b977c4",
+      "completedLocales": [
+        "es",
+        "zh-CN",
+        "fr",
+        "ja",
+        "de",
+        "pt-BR"
+      ]
+    },
+    {
+      "path": "docs/portable-blender-mcp.md",
+      "sha256": "f663a332901172914547ddaebe629b258fff8948d2610b197f9616a96a080240",
+      "completedLocales": [
+        "es",
+        "zh-CN",
+        "fr",
+        "ja",
+        "de",
+        "pt-BR"
+      ]
+    },
+    {
+      "path": "docs/releasing.md",
+      "sha256": "acc6fd091082bd3d44ec152884615bc0942ce39f32f2e351121cd7b94969cbf9",
+      "completedLocales": [
+        "es",
+        "zh-CN",
+        "fr",
+        "ja",
+        "de",
+        "pt-BR"
+      ]
+    },
+    {
+      "path": "skills/using-vipermesh-blender/SKILL.md",
+      "sha256": "5d2ffe54eea7a3d0d2b1b18a044ae20c90b2535f3edf96adcd10a3013a2c7c74",
+      "completedLocales": [
+        "es",
+        "zh-CN",
+        "fr",
+        "ja",
+        "de",
+        "pt-BR"
+      ]
+    },
+    {
+      "path": "skills/using-vipermesh-blender/references/character-animation-export.md",
+      "sha256": "f362f117244db3629f1a4b21c88a490385c634f76c7911c62bda12058b8a24ff",
+      "completedLocales": [
+        "es",
+        "zh-CN",
+        "fr",
+        "ja",
+        "de",
+        "pt-BR"
+      ]
+    },
+    {
+      "path": "skills/using-vipermesh-blender/references/geometry-materials-assets.md",
+      "sha256": "89ed58b6f8fe4fd0c19254a73c179314dddc1e26d789ddcd314083c0137c0684",
+      "completedLocales": [
+        "es",
+        "zh-CN",
+        "fr",
+        "ja",
+        "de",
+        "pt-BR"
+      ]
+    },
+    {
+      "path": "skills/using-vipermesh-blender/references/scene-operations.md",
+      "sha256": "9ace5250a496e48dff34565d35a91d4d0f1edb77f2ce9151a3570f4b0c084a70",
+      "completedLocales": [
+        "es",
+        "zh-CN",
+        "fr",
+        "ja",
+        "de",
+        "pt-BR"
+      ]
+    },
+    {
+      "path": "skills/using-vipermesh-blender/references/spatial-validation.md",
+      "sha256": "dc041f80bd904206c505815c18dcfab149d082c4a2cf22e9d7e19ed4b32d4671",
+      "completedLocales": [
+        "es",
+        "zh-CN",
+        "fr",
+        "ja",
+        "de",
+        "pt-BR"
+      ]
+    },
+    {
+      "path": "skills/using-vipermesh-blender/references/visual-presentation.md",
+      "sha256": "eed6b2b1c87eb56bde11842f3260e28ac6da30680bd4f9f5ec1ef809cb0c877c",
+      "completedLocales": [
+        "es",
+        "zh-CN",
+        "fr",
+        "ja",
+        "de",
+        "pt-BR"
+      ]
+    },
+    {
+      "path": "site/index.md",
+      "sha256": "e7fcea3971b777809e3681d6028bdb4baec57d6d7350f518ca50a054a515afa5",
+      "completedLocales": [
+        "es",
+        "zh-CN",
+        "fr",
+        "ja",
+        "de",
+        "pt-BR"
+      ]
+    },
+    {
+      "path": "site/setup/index.md",
+      "sha256": "701a6887a165a1c683ca2e2df649a79ad011c0c59288a38e49364cf8f3599d8d",
+      "completedLocales": [
+        "es",
+        "zh-CN",
+        "fr",
+        "ja",
+        "de",
+        "pt-BR"
+      ]
+    },
+    {
+      "path": "llms.txt",
+      "sha256": "4db5c25b73ee9044c59d56cb6ee0998047c5d357ed38c2481cdfdbf8017ec568",
+      "completedLocales": [
+        "es",
+        "zh-CN",
+        "fr",
+        "ja",
+        "de",
+        "pt-BR"
+      ]
+    },
+    {
+      "path": "site/llms.txt",
+      "sha256": "4db5c25b73ee9044c59d56cb6ee0998047c5d357ed38c2481cdfdbf8017ec568",
+      "completedLocales": [
+        "es",
+        "zh-CN",
+        "fr",
+        "ja",
+        "de",
+        "pt-BR"
+      ]
+    },
+    {
+      "path": ".github/pull_request_template.md",
+      "sha256": "d77eaaa593a96d80e8ee00b26f369b6633e54f612d580a0712789f9140e0ae83",
+      "completedLocales": [
+        "es",
+        "zh-CN",
+        "fr",
+        "ja",
+        "de",
+        "pt-BR"
+      ]
+    }
+  ],
+  "exclusions": [
+    {
+      "path": ".github/ISSUE_TEMPLATE/bug-report.yml",
+      "reason": "Executable workflow, dependency automation, or structured issue-template configuration."
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/config.yml",
+      "reason": "Executable workflow, dependency automation, or structured issue-template configuration."
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/feature-request.yml",
+      "reason": "Executable workflow, dependency automation, or structured issue-template configuration."
+    },
+    {
+      "path": ".github/dependabot.yml",
+      "reason": "Executable workflow, dependency automation, or structured issue-template configuration."
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "reason": "Executable workflow, dependency automation, or structured issue-template configuration."
+    },
+    {
+      "path": ".github/workflows/pages.yml",
+      "reason": "Executable workflow, dependency automation, or structured issue-template configuration."
+    },
+    {
+      "path": ".github/workflows/release.yml",
+      "reason": "Executable workflow, dependency automation, or structured issue-template configuration."
+    },
+    {
+      "path": ".gitignore",
+      "reason": "Software implementation, executable script/test, lockfile, or build configuration; no behavior changes."
+    },
+    {
+      "path": "CITATION.cff",
+      "reason": "Machine-readable citation or MCP publication metadata; not prose documentation."
+    },
+    {
+      "path": "LICENSE",
+      "reason": "Authoritative legal text remains in its original language; translations link to this original."
+    },
+    {
+      "path": "addon/vipermesh-addon.py",
+      "reason": "Software implementation, executable script/test, lockfile, or build configuration; no behavior changes."
+    },
+    {
+      "path": "lib/blender/tool-metadata.ts",
+      "reason": "Software implementation, executable script/test, lockfile, or build configuration; no behavior changes."
+    },
+    {
+      "path": "lib/mcp/client.ts",
+      "reason": "Software implementation, executable script/test, lockfile, or build configuration; no behavior changes."
+    },
+    {
+      "path": "lib/mcp/config.ts",
+      "reason": "Software implementation, executable script/test, lockfile, or build configuration; no behavior changes."
+    },
+    {
+      "path": "lib/mcp/types.ts",
+      "reason": "Software implementation, executable script/test, lockfile, or build configuration; no behavior changes."
+    },
+    {
+      "path": "lib/orchestration/tool-registry.ts",
+      "reason": "Software implementation, executable script/test, lockfile, or build configuration; no behavior changes."
+    },
+    {
+      "path": "lib/portable-mcp/agent-context.ts",
+      "reason": "Software implementation, executable script/test, lockfile, or build configuration; no behavior changes."
+    },
+    {
+      "path": "lib/portable-mcp/guidance.ts",
+      "reason": "Software implementation, executable script/test, lockfile, or build configuration; no behavior changes."
+    },
+    {
+      "path": "lib/portable-mcp/onboarding.ts",
+      "reason": "Software implementation, executable script/test, lockfile, or build configuration; no behavior changes."
+    },
+    {
+      "path": "lib/portable-mcp/policy.ts",
+      "reason": "Software implementation, executable script/test, lockfile, or build configuration; no behavior changes."
+    },
+    {
+      "path": "lib/portable-mcp/preview.ts",
+      "reason": "Software implementation, executable script/test, lockfile, or build configuration; no behavior changes."
+    },
+    {
+      "path": "lib/portable-mcp/server.ts",
+      "reason": "Software implementation, executable script/test, lockfile, or build configuration; no behavior changes."
+    },
+    {
+      "path": "lib/portable-mcp/service.ts",
+      "reason": "Software implementation, executable script/test, lockfile, or build configuration; no behavior changes."
+    },
+    {
+      "path": "package-lock.json",
+      "reason": "Software implementation, executable script/test, lockfile, or build configuration; no behavior changes."
+    },
+    {
+      "path": "package.json",
+      "reason": "Software implementation, executable script/test, lockfile, or build configuration; no behavior changes."
+    },
+    {
+      "path": "scripts/notify_indexnow.py",
+      "reason": "Software implementation, executable script/test, lockfile, or build configuration; no behavior changes."
+    },
+    {
+      "path": "scripts/public-portable-blender-mcp.ts",
+      "reason": "Software implementation, executable script/test, lockfile, or build configuration; no behavior changes."
+    },
+    {
+      "path": "scripts/validate-package.mjs",
+      "reason": "Software implementation, executable script/test, lockfile, or build configuration; no behavior changes."
+    },
+    {
+      "path": "server.json",
+      "reason": "Machine-readable citation or MCP publication metadata; not prose documentation."
+    },
+    {
+      "path": "site/assets/LICENSE-Lucide.txt",
+      "reason": "Authoritative legal text remains in its original language; translations link to this original."
+    },
+    {
+      "path": "site/assets/OFL-Outfit.txt",
+      "reason": "Authoritative legal text remains in its original language; translations link to this original."
+    },
+    {
+      "path": "site/assets/brand-mark-256.webp",
+      "reason": "Shared binary/media/font/icon asset; referenced without duplication or localization."
+    },
+    {
+      "path": "site/assets/brand-mark.png",
+      "reason": "Shared binary/media/font/icon asset; referenced without duplication or localization."
+    },
+    {
+      "path": "site/assets/connector-overview-poster.png",
+      "reason": "Shared binary/media/font/icon asset; referenced without duplication or localization."
+    },
+    {
+      "path": "site/assets/connector-overview-poster.webp",
+      "reason": "Shared binary/media/font/icon asset; referenced without duplication or localization."
+    },
+    {
+      "path": "site/assets/connector-overview.mp4",
+      "reason": "Shared binary/media/font/icon asset; referenced without duplication or localization."
+    },
+    {
+      "path": "site/assets/icons.svg",
+      "reason": "Shared binary/media/font/icon asset; referenced without duplication or localization."
+    },
+    {
+      "path": "site/assets/outfit-variable.ttf",
+      "reason": "Shared binary/media/font/icon asset; referenced without duplication or localization."
+    },
+    {
+      "path": "site/assets/readme-download.svg",
+      "reason": "Shared binary/media/font/icon asset; referenced without duplication or localization."
+    },
+    {
+      "path": "site/assets/readme-mark.svg",
+      "reason": "Shared binary/media/font/icon asset; referenced without duplication or localization."
+    },
+    {
+      "path": "site/assets/readme-setup.svg",
+      "reason": "Shared binary/media/font/icon asset; referenced without duplication or localization."
+    },
+    {
+      "path": "site/assets/scandinavian-entryway-comparison.png",
+      "reason": "Shared binary/media/font/icon asset; referenced without duplication or localization."
+    },
+    {
+      "path": "site/assets/scandinavian-entryway-comparison.provenance.json",
+      "reason": "Generated image-integrity record; preserve original evidence unchanged."
+    },
+    {
+      "path": "site/assets/scene-comparison-1376.webp",
+      "reason": "Shared binary/media/font/icon asset; referenced without duplication or localization."
+    },
+    {
+      "path": "site/assets/scene-comparison-688.webp",
+      "reason": "Shared binary/media/font/icon asset; referenced without duplication or localization."
+    },
+    {
+      "path": "site/assets/viper-wrap-1024.webp",
+      "reason": "Shared binary/media/font/icon asset; referenced without duplication or localization."
+    },
+    {
+      "path": "site/assets/viper-wrap-1800.webp",
+      "reason": "Shared binary/media/font/icon asset; referenced without duplication or localization."
+    },
+    {
+      "path": "site/assets/viper-wrap-640.webp",
+      "reason": "Shared binary/media/font/icon asset; referenced without duplication or localization."
+    },
+    {
+      "path": "site/assets/viper-wrap.png",
+      "reason": "Shared binary/media/font/icon asset; referenced without duplication or localization."
+    },
+    {
+      "path": "site/googleb695d558fb505969.html",
+      "reason": "Site runtime, crawler/deployment metadata, verification token, or generated machine-facing output."
+    },
+    {
+      "path": "site/index.html",
+      "reason": "Deployed English website markup; its maintained public Markdown equivalent is translated, not the website UI."
+    },
+    {
+      "path": "site/indexnow-key.txt",
+      "reason": "Site runtime, crawler/deployment metadata, verification token, or generated machine-facing output."
+    },
+    {
+      "path": "site/robots.txt",
+      "reason": "Site runtime, crawler/deployment metadata, verification token, or generated machine-facing output."
+    },
+    {
+      "path": "site/setup/index.html",
+      "reason": "Deployed English website markup; its maintained public Markdown equivalent is translated, not the website UI."
+    },
+    {
+      "path": "site/site.js",
+      "reason": "Site runtime, crawler/deployment metadata, verification token, or generated machine-facing output."
+    },
+    {
+      "path": "site/sitemap.xml",
+      "reason": "Site runtime, crawler/deployment metadata, verification token, or generated machine-facing output."
+    },
+    {
+      "path": "site/styles.css",
+      "reason": "Site runtime, crawler/deployment metadata, verification token, or generated machine-facing output."
+    },
+    {
+      "path": "tests/conformance.ts",
+      "reason": "Software implementation, executable script/test, lockfile, or build configuration; no behavior changes."
+    },
+    {
+      "path": "tsconfig.json",
+      "reason": "Software implementation, executable script/test, lockfile, or build configuration; no behavior changes."
+    }
+  ],
+  "excludedTrees": [
+    {
+      "path": "docs/plans/",
+      "reason": "Historical/internal implementation plans; no files present in the inspected clone."
+    },
+    {
+      "path": "data/",
+      "reason": "Private/internal corpora and generated benchmark traces; no files present in the inspected clone."
+    },
+    {
+      "path": ".git/",
+      "reason": "Repository history and local Git bookkeeping."
+    },
+    {
+      "path": "node_modules/",
+      "reason": "Installed third-party dependencies and generated caches."
+    },
+    {
+      "path": "dist/",
+      "reason": "Generated executable build output."
+    }
+  ],
+  "infrastructure": [
+    "docs/i18n/README.md",
+    "docs/i18n/manifest.json",
+    "docs/i18n/task.md",
+    "docs/i18n/implementation-plan.md",
+    "scripts/validate-i18n.mjs",
+    "tests/i18n-validator.test.mjs"
+  ],
+  "limitations": [
+    "Machine checks do not establish native-language fluency or independently revalidate source claims.",
+    "Existing external URLs are preserved, not fetched; deployed English website and release artifacts are unchanged.",
+    "Localized skill files are documentation mirrors; runtime retrieval still uses the original English skill tree."
+  ]
+}

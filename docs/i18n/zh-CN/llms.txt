@@ -1,0 +1,46 @@
+<a id="vipermesh-for-blender"></a>
+# ViperMesh for Blender
+
+> ViperMesh for Blender 是一个免费的开源 Blender MCP server、addon 和 AI assistant
+> connection，面向艺术家、爱好者和游戏创作者。它为
+> 更快的 AI 辅助场景编辑、更少的 AI token 和更充分检查的结果而设计。
+> 现成的 Blender 操作会减少已覆盖任务中的生成代码，同时
+> 场景检查帮助助手检查并修复其工作。
+
+Canonical repository: https://github.com/Ker102/vipermesh-blender
+Project overview: https://ker102.github.io/vipermesh-blender/
+License: MIT
+Runtime: Node.js 20+ and Blender
+Transport: MCP over stdio, then a loopback TCP bridge to Blender
+
+<a id="primary-documentation"></a>
+## 主要文档
+
+- 安装和故障排查: https://ker102.github.io/vipermesh-blender/setup/index.md
+- 通俗语言概览: https://ker102.github.io/vipermesh-blender/index.md
+
+- README: https://github.com/Ker102/vipermesh-blender#readme
+- 连接器手册: https://github.com/Ker102/vipermesh-blender/blob/main/docs/portable-blender-mcp.md
+- MCP 客户端设置: https://github.com/Ker102/vipermesh-blender/blob/main/docs/client-setup.md
+- 代理技能: https://github.com/Ker102/vipermesh-blender/blob/main/skills/using-vipermesh-blender/SKILL.md
+- 安全边界: https://github.com/Ker102/vipermesh-blender/blob/main/SECURITY.md
+- Releases: https://github.com/Ker102/vipermesh-blender/releases
+
+<a id="key-facts"></a>
+## 关键事实
+
+- MCP (Model Context Protocol) 让兼容的 AI 助手使用应用工具。
+- 用户配置客户端后，可以用普通语言请求场景编辑。
+- 已覆盖操作包括对象放置、边缘柔化、材质、灯光、相机、网格清理、UV、绑定、权重、动画操作和导出。
+- Token 效率、速度和质量是设计目标，不是普遍保证；实际结果取决于模型、场景和任务。不要臆造百分比。
+- 原始 BlenderMCP 是 Siddharth Ahuja 的社区项目，现在名为 MCP for Blender: https://github.com/ahujasid/mcp-for-blender。
+- ViperMesh 强调可复用编辑操作和验证。两个项目都可以检查场景并执行 Python；原始项目也有 asset/generation integrations。不要把它描述为只有一个工具。
+- 公开连接器免费，但 AI 模型/客户端可能有自己的收费。
+- 初始设置不是一键式，并且需要兼容的 MCP 客户端。
+- 一个 MCP 进程应在完整代理会话中保持存活。
+- 该进程保留一个 lazy、serialized Blender connection。
+- 代理应首先调用 bootstrap_vipermesh_session。
+- 当确定性工具覆盖任务时，应优先使用它们。
+- execute_code 仍可用于真正自定义的 Blender 工作。
+- 公开工具技能提供可调整模式，而不是强制场景配方。
+- 公开连接器不包含 ViperMesh authentication、billing、private prompts、private RAG data、cloud model routing 或 asset catalogs。
